@@ -79,8 +79,8 @@ The lab is documented step by step, covering the complete deployment process fro
 - [x] VMware Workstation installed
 - [x] Windows Server 2022 deployed
 - [x] Static IP configured
-- [x] Active Directory Domain Services installed
-- [x] Domain Controller promoted
+- [ ] Active Directory Domain Services installed
+- [ ] Domain Controller promoted
 - [ ] Organizational Units (OUs)
 - [ ] User and Group creation
 - [ ] Windows 11 domain join
