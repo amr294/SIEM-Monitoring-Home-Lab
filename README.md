@@ -65,12 +65,13 @@ The lab is documented step by step, covering the complete deployment process fro
 | 04 | [Network Configuration and VMware Troubleshooting](docs/04-Network-Configuration-and-Troubleshooting.md) | Configure networking, troubleshoot connectivity issues, and validate VMware NAT functionality. |
 | 05 | [Active Directory Domain Services (AD DS) Installation](docs/05-Active-Directory-Domain-Services-Installation.md) | Install the AD DS role, create the first forest, and promote the server to a Domain Controller. |
 | 06 | [Organizational Units and User Management](docs/06-Organizational-Units-and-User-Management.md) | Design the Active Directory OU structure, create users and security groups, and implement role-based access control (RBAC). |
-| 07 | *Coming Soon* | Group Policy Configuration |
+| 07 | *Coming Soon* | Windows 11 Virtual Machine Installation |
 | 08 | *Coming Soon* | Windows 11 Domain Join |
-| 09 | *Coming Soon* | Sysmon Deployment |
-| 10 | *Coming Soon* | Wazuh SIEM Deployment |
-| 11 | *Coming Soon* | Attack Simulation |
-| 12 | *Coming Soon* | Detection and Analysis |
+| 09 | *Coming Soon* | Group Policy Configuration |
+| 10 | *Coming Soon* | Sysmon Deployment |
+| 11 | *Coming Soon* | Wazuh SIEM Deployment |
+| 12 | *Coming Soon* | Attack Simulation |
+| 13 | *Coming Soon* | Detection and Analysis |
 
 ---
 
@@ -85,8 +86,9 @@ The lab is documented step by step, covering the complete deployment process fro
 - [x] DNS installation and integration
 - [x] Organizational Unit (OU) design
 - [x] User and Security Group management
-- [ ] Group Policy configuration
+- [ ] Windows 11 virtual machine installation
 - [ ] Windows 11 domain join
+- [ ] Group Policy configuration
 - [ ] Sysmon deployment
 - [ ] Wazuh SIEM deployment
 - [ ] Attack simulation
