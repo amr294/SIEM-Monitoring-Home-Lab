@@ -19,7 +19,6 @@ This repository contains the complete project documentation, configuration steps
 - PowerShell
 - Sysmon
 - Wazuh
-- Splunk Enterprise (Planned)
 
 ## Project Goals
 
@@ -64,7 +63,7 @@ The lab is documented step by step, covering the complete deployment process fro
 | 02 | [VMware Setup](docs/02-VMware-Setup.md) | Create the virtual networking environment and virtual machines. |
 | 03 | [Windows Server Installation](docs/03-Windows-Server-Installation.md) | Install Windows Server 2022 and perform the initial system configuration. |
 | 04 | [Network Configuration and VMware Troubleshooting](docs/04-Network-Configuration-and-Troubleshooting.md) | Configure networking, troubleshoot connectivity issues, and validate VMware NAT functionality. |
-| 05 | *Coming Soon* | Active Directory Domain Services (AD DS) Installation |
+| 05 | [Active Directory Domain Services (AD DS) Installation](docs/05-Active-Directory-Domain-Services-Installation.md) | Install the AD DS role, create the first forest, and promote the server to a Domain Controller. |
 | 06 | *Coming Soon* | Organizational Units and User Management |
 | 07 | *Coming Soon* | Group Policy Configuration |
 | 08 | *Coming Soon* | Windows 11 Domain Join |
@@ -72,6 +71,7 @@ The lab is documented step by step, covering the complete deployment process fro
 | 10 | *Coming Soon* | Wazuh SIEM Deployment |
 | 11 | *Coming Soon* | Attack Simulation |
 | 12 | *Coming Soon* | Detection and Analysis |
+
 ---
 
 ## Project Progress
@@ -79,8 +79,9 @@ The lab is documented step by step, covering the complete deployment process fro
 - [x] VMware Workstation installed
 - [x] Windows Server 2022 deployed
 - [x] Static IP configured
-- [ ] Active Directory Domain Services installed
-- [ ] Domain Controller promoted
+- [x] Active Directory Domain Services (AD DS) installation
+- [x] Domain Controller promotion
+- [x] DNS installation and integration
 - [ ] Organizational Units (OUs)
 - [ ] User and Group creation
 - [ ] Windows 11 domain join
