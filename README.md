@@ -64,7 +64,7 @@ The lab is documented step by step, covering the complete deployment process fro
 | 03 | [Windows Server Installation](docs/03-Windows-Server-Installation.md) | Install Windows Server 2022 and perform the initial system configuration. |
 | 04 | [Network Configuration and VMware Troubleshooting](docs/04-Network-Configuration-and-Troubleshooting.md) | Configure networking, troubleshoot connectivity issues, and validate VMware NAT functionality. |
 | 05 | [Active Directory Domain Services (AD DS) Installation](docs/05-Active-Directory-Domain-Services-Installation.md) | Install the AD DS role, create the first forest, and promote the server to a Domain Controller. |
-| 06 | *Coming Soon* | Organizational Units and User Management |
+| 06 | [Organizational Units and User Management](docs/06-Organizational-Units-and-User-Management.md) | Design the Active Directory OU structure, create users and security groups, and implement role-based access control (RBAC). |
 | 07 | *Coming Soon* | Group Policy Configuration |
 | 08 | *Coming Soon* | Windows 11 Domain Join |
 | 09 | *Coming Soon* | Sysmon Deployment |
@@ -76,19 +76,21 @@ The lab is documented step by step, covering the complete deployment process fro
 
 ## Project Progress
 
-- [x] VMware Workstation installed
-- [x] Windows Server 2022 deployed
-- [x] Static IP configured
-- [x] Active Directory Domain Services (AD DS) installation
+- [x] Lab planning and architecture design
+- [x] VMware Workstation environment
+- [x] Windows Server 2022 installation
+- [x] Network configuration and troubleshooting
+- [x] Active Directory Domain Services (AD DS) deployment
 - [x] Domain Controller promotion
 - [x] DNS installation and integration
-- [ ] Organizational Units (OUs)
-- [ ] User and Group creation
+- [x] Organizational Unit (OU) design
+- [x] User and Security Group management
+- [ ] Group Policy configuration
 - [ ] Windows 11 domain join
 - [ ] Sysmon deployment
-- [ ] Wazuh deployment
+- [ ] Wazuh SIEM deployment
 - [ ] Attack simulation
-- [ ] Detection rules
+- [ ] Detection engineering and analysis
 
 ## Disclaimer
 
