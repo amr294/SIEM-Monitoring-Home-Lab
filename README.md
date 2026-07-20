@@ -66,11 +66,11 @@ The lab is documented step by step, covering the complete deployment process fro
 | 05 | [Active Directory Domain Services (AD DS) Installation](docs/05-Active-Directory-Domain-Services-Installation.md) | Install the AD DS role, create the first forest, and promote the server to a Domain Controller. |
 | 06 | [Organizational Units and User Management](docs/06-Organizational-Units-and-User-Management.md) | Design the Active Directory OU structure, create users and security groups, and implement role-based access control (RBAC). |
 | 07 | [Workstation Deployment and Domain Join](docs/07-Workstation-Deployment-and-Domain-Join.md) | Deploy a Windows 11 Pro workstation, configure networking, install VMware Tools, join the workstation to the Active Directory domain, and organize the computer object within the Workstations OU. |
-| 08 | *Coming Soon* | Group Policy Configuration |
-| 09 | *Coming Soon* | Sysmon Deployment |
+| 08 | [Group Policy Configuration](docs/08-Group-Policy-Configuration.md) | Configure enterprise audit policies, enable command-line process logging, and validate Windows Security Event ID 4688 generation. |
+| 09 | *Coming Soon* | Endpoint Telemetry with Sysmon |
 | 10 | *Coming Soon* | Wazuh SIEM Deployment |
-| 11 | *Coming Soon* | Attack Simulation |
-| 12 | *Coming Soon* | Detection and Analysis |
+| 11 | *Coming Soon* | Wazuh Agent Deployment |
+| 12 | *Coming Soon* | Attack Simulation and Detection |
 
 ---
 
@@ -86,7 +86,7 @@ The lab is documented step by step, covering the complete deployment process fro
 - [x] Organizational Unit (OU) design
 - [x] User and Security Group management
 - [x] Windows 11 workstation deployment and domain join
-- [ ] Group Policy configuration
+- [x] Group Policy configuration
 - [ ] Sysmon deployment
 - [ ] Wazuh SIEM deployment
 - [ ] Attack simulation
