@@ -67,7 +67,7 @@ The lab is documented step by step, covering the complete deployment process fro
 | 06 | [Organizational Units and User Management](docs/06-Organizational-Units-and-User-Management.md) | Design the Active Directory OU structure, create users and security groups, and implement role-based access control (RBAC). |
 | 07 | [Workstation Deployment and Domain Join](docs/07-Workstation-Deployment-and-Domain-Join.md) | Deploy a Windows 11 Pro workstation, configure networking, install VMware Tools, join the workstation to the Active Directory domain, and organize the computer object within the Workstations OU. |
 | 08 | [Group Policy Configuration](docs/08-Group-Policy-Configuration.md) | Configure enterprise audit policies, enable command-line process logging, and validate Windows Security Event ID 4688 generation. |
-| 09 | *Coming Soon* | Endpoint Telemetry with Sysmon |
+| 09 | [Endpoint Telemetry with Sysmon](docs/09-Sysmon-Deployment.md) | Deploy Sysmon on the Domain Controller and Windows 11 client, validate endpoint telemetry, and confirm dynamic configuration updates. |
 | 10 | *Coming Soon* | Wazuh SIEM Deployment |
 | 11 | *Coming Soon* | Wazuh Agent Deployment |
 | 12 | *Coming Soon* | Attack Simulation and Detection |
@@ -87,7 +87,7 @@ The lab is documented step by step, covering the complete deployment process fro
 - [x] User and Security Group management
 - [x] Windows 11 workstation deployment and domain join
 - [x] Group Policy configuration
-- [ ] Sysmon deployment
+- [x] Sysmon deployment
 - [ ] Wazuh SIEM deployment
 - [ ] Attack simulation
 - [ ] Detection engineering and analysis
