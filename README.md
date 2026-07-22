@@ -68,7 +68,7 @@ The lab is documented step by step, covering the complete deployment process fro
 | 07 | [Workstation Deployment and Domain Join](docs/07-Workstation-Deployment-and-Domain-Join.md) | Deploy a Windows 11 Pro workstation, configure networking, install VMware Tools, join the workstation to the Active Directory domain, and organize the computer object within the Workstations OU. |
 | 08 | [Group Policy Configuration](docs/08-Group-Policy-Configuration.md) | Configure enterprise audit policies, enable command-line process logging, and validate Windows Security Event ID 4688 generation. |
 | 09 | [Endpoint Telemetry with Sysmon](docs/09-Sysmon-Deployment.md) | Deploy Sysmon on the Domain Controller and Windows 11 client, validate endpoint telemetry, and confirm dynamic configuration updates. |
-| 10 | *Coming Soon* | Wazuh SIEM Deployment |
+| 10 | [Wazuh SIEM Deployment](docs/10-Wazuh-SIEM-Deployment.md) | Deploy the Wazuh SIEM platform using a native Ubuntu installation, configure secure TLS communication, integrate the Indexer, Manager, Filebeat, and Dashboard, validate the complete event pipeline, and document troubleshooting throughout the deployment. |
 | 11 | *Coming Soon* | Wazuh Agent Deployment |
 | 12 | *Coming Soon* | Attack Simulation and Detection |
 
@@ -88,7 +88,7 @@ The lab is documented step by step, covering the complete deployment process fro
 - [x] Windows 11 workstation deployment and domain join
 - [x] Group Policy configuration
 - [x] Sysmon deployment
-- [ ] Wazuh SIEM deployment
+- [x] Wazuh SIEM deployment
 - [ ] Attack simulation
 - [ ] Detection engineering and analysis
 
