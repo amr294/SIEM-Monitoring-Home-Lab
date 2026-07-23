@@ -1,12 +1,28 @@
 # SIEM Monitoring Home Lab
 
+![Platform](https://img.shields.io/badge/Platform-Windows_Server_2022-blue)
+![SIEM](https://img.shields.io/badge/SIEM-Wazuh-green)
+![Telemetry](https://img.shields.io/badge/Sysmon-blueviolet)
+![Virtualization](https://img.shields.io/badge/VMware-Workstation_Pro-orange)
+![Status](https://img.shields.io/badge/Status-In_Progress-yellow)
+
 ## Project Overview
 
-This project documents the design, implementation, and testing of a Security Information and Event Management (SIEM) home lab.
+This project demonstrates the design, deployment, and validation of an enterprise-style Security Information and Event Management (SIEM) home lab. The environment simulates a Windows enterprise network by integrating Active Directory, Group Policy, Sysmon endpoint telemetry, and a native Wazuh SIEM deployment to collect, analyze, and validate security events. 
 
-The lab simulates a small enterprise environment by deploying Windows infrastructure, generating security events, collecting logs, and analyzing them using security monitoring tools.
+The project is currently transitioning from infrastructure deployment to adversary simulation, detection engineering, and threat hunting using realistic attack scenarios.
 
-This repository contains the complete project documentation, configuration steps, screenshots, lessons learned, and future improvements throughout the project.
+Unlike installation tutorials, this repository documents an end-to-end enterprise security lab built incrementally, including deployment decisions, validation procedures, troubleshooting, and detection engineering.
+
+## Lab Architecture
+
+<p align="center">
+  <img src="images/architecture/lab-architecture.png" width="900">
+</p>
+
+<p align="center">
+Enterprise Active Directory environment integrated with a native Wazuh SIEM deployment.
+</p>
 
 ## Technologies
 
@@ -20,17 +36,26 @@ This repository contains the complete project documentation, configuration steps
 - Sysmon
 - Wazuh
 
-## Project Goals
+## Project Progress
 
-- Build an enterprise-style Active Directory environment.
-- Configure Windows infrastructure and networking.
-- Generate realistic Windows security events.
-- Collect and analyze security logs using SIEM platforms.
-- Detect attacker activity using security analytics.
-- Simulate adversary techniques in a controlled environment.
-- Document every implementation step.
+- [x] Lab planning and architecture design
+- [x] VMware Workstation environment
+- [x] Windows Server 2022 installation
+- [x] Network configuration and troubleshooting
+- [x] Active Directory Domain Services (AD DS) deployment
+- [x] Domain Controller promotion
+- [x] DNS installation and integration
+- [x] Organizational Unit (OU) design
+- [x] User and Security Group management
+- [x] Windows 11 workstation deployment and domain join
+- [x] Group Policy configuration
+- [x] Sysmon deployment
+- [x] Wazuh SIEM deployment
+- [x] Wazuh agent deployment
+- [ ] Attack simulation (in progress)
+- [ ] Detection engineering and analysis (planned)
 
-## Lab Architecture
+## Lab Components
 
 The home lab consists of:
 
@@ -39,19 +64,6 @@ The home lab consists of:
 - Kali Linux Attacker Machine
 - Wazuh SIEM Server
 - VMware Workstation Pro virtual network
-
-## Skills Demonstrated
-
-- Active Directory Administration
-- Windows Server Administration
-- DNS Configuration
-- Virtualization
-- Network Configuration
-- Security Monitoring
-- SIEM Deployment
-- Windows Event Logging
-- Documentation
-- Git & GitHub
 
 ## 📚 Documentation
 
@@ -69,28 +81,23 @@ The lab is documented step by step, covering the complete deployment process fro
 | 08 | [Group Policy Configuration](docs/08-Group-Policy-Configuration.md) | Configure enterprise audit policies, enable command-line process logging, and validate Windows Security Event ID 4688 generation. |
 | 09 | [Endpoint Telemetry with Sysmon](docs/09-Sysmon-Deployment.md) | Deploy Sysmon on the Domain Controller and Windows 11 client, validate endpoint telemetry, and confirm dynamic configuration updates. |
 | 10 | [Wazuh SIEM Deployment](docs/10-Wazuh-SIEM-Deployment.md) | Deploy the Wazuh SIEM platform using a native Ubuntu installation, configure secure TLS communication, integrate the Indexer, Manager, Filebeat, and Dashboard, validate the complete event pipeline, and document troubleshooting throughout the deployment. |
-| 11 | *Coming Soon* | Wazuh Agent Deployment |
-| 12 | *Coming Soon* | Attack Simulation and Detection |
+| 11 | [Wazuh Agent Deployment](docs/11-Wazuh-Agent-Deployment.md) | Deploy and register Wazuh agents on the Domain Controller and Windows 11 client, validate endpoint communication, troubleshoot Sysmon telemetry ingestion, and confirm successful event collection across both endpoints. |
+| 12 | *Coming Soon* | Attack Simulation and Detection Engineering |
 
 ---
 
-## Project Progress
+## Skills Demonstrated
 
-- [x] Lab planning and architecture design
-- [x] VMware Workstation environment
-- [x] Windows Server 2022 installation
-- [x] Network configuration and troubleshooting
-- [x] Active Directory Domain Services (AD DS) deployment
-- [x] Domain Controller promotion
-- [x] DNS installation and integration
-- [x] Organizational Unit (OU) design
-- [x] User and Security Group management
-- [x] Windows 11 workstation deployment and domain join
-- [x] Group Policy configuration
-- [x] Sysmon deployment
-- [x] Wazuh SIEM deployment
-- [ ] Attack simulation
-- [ ] Detection engineering and analysis
+- Active Directory Administration
+- Windows Server Administration
+- DNS Configuration
+- Virtualization
+- Network Configuration
+- Security Monitoring
+- SIEM Deployment
+- Windows Event Logging
+- Documentation
+- Git & GitHub
 
 ## Disclaimer
 
