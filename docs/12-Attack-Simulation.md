@@ -18,10 +18,10 @@ This methodology demonstrates both preventive security controls and detection en
 | Technique | ATT&CK ID | Phase A | Phase B |
 |------------|-----------|:------:|:------:|
 | PowerShell Fileless Script Execution | T1059.001 (Test 10) | ✅ | ✅ |
-| EncodedCommand Parameter Variations | T1059.001 (Test 15) | ✅ | ⏳ |
-| Registry Modification | T1112 | ✅ | ⏳ |
-| Scheduled Task | T1053.005 | ✅ | ⏳ |
-| Registry Run Keys | T1547.001 | ✅ | ⏳ |
+| EncodedCommand Parameter Variations | T1059.001 (Test 15) | ✅ | ✅ |
+| Registry Modification | T1112 | ✅ | ✅ |
+| Scheduled Task | T1053.005 | ✅ | ✅ |
+| Registry Run Keys | T1547.001 | ✅ | ✅ |
 
 ---
 
@@ -1068,7 +1068,7 @@ This behavior demonstrates how Wazuh preserves the complete execution context, a
 
 ## Lessons Learned
 
-- Successful encoded PowerShell execution produces significantly richer endpoint telemetry than blocked executions.
+- Successful encoded PowerShell execution demonstrates that Sysmon and Wazuh maintain consistent visibility regardless of Microsoft Defender's protection state.
 - Sysmon captures both the initial PowerShell execution and the subsequent processes spawned by the decoded payload.
 - Wazuh correlates multiple behavioral detections from a single encoded PowerShell execution, including process creation, temporary file creation, discovery activity, and security policy inspection.
 - Behavioral analytics provide valuable investigative context even when the executed command is heavily obfuscated.
@@ -1232,7 +1232,7 @@ This demonstrates that Wazuh classifies activity according to the security impac
 
 ## Lessons Learned
 
-- Successful registry modification provides significantly richer telemetry than blocked execution.
+- Registry modification activity produces consistent telemetry through Sysmon and Wazuh regardless of Microsoft Defender's protection state.
 - Sysmon Event ID 13 captures detailed registry modification data, including the affected registry path, written value, and responsible process.
 - Registry Run Keys remain one of the most common Windows persistence mechanisms leveraged by adversaries.
 - Wazuh correlates registry activity according to the resulting persistence behavior, allowing investigators to reconstruct both the registry modification and its security impact.
@@ -1288,8 +1288,9 @@ Following execution, Windows Task Scheduler was inspected to verify that the per
 ### Scheduled Task Properties
 
 <p align="center">
-<img src="..\images\12-Attack-Simulation\T1053.005-Test7-PhaseB\02-t1053.005-test7-phaseb-task-scheduler-general.png.png" width="750">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/02-t1053.005-test7-phaseb-task-scheduler-general.png" width="750">
 </p>
+
 
 The scheduled task **ATOMIC-T1053.005** was successfully created and configured to execute under the Administrator account.
 
@@ -1616,3 +1617,35 @@ This illustrates how multiple detection rules can be triggered from a single reg
 - Sysmon provides detailed visibility into both registry modifications and the processes responsible for creating them.
 - Wazuh successfully correlates Registry Run Key persistence with additional behavioral detections generated during the same execution.
 - Consistent telemetry from Sysmon and Wazuh demonstrates that Windows persistence techniques remain highly visible even when Microsoft Defender is disabled.
+
+---
+
+# Phase B Summary
+
+Phase B validated that Sysmon and Wazuh maintain comprehensive endpoint visibility independently of Microsoft Defender's protection state. By executing the same Atomic Red Team techniques without endpoint prevention, the complete attack chain could be observed and compared against the results obtained during Phase A.
+
+Only **Technique 1 (T1059.001 Test #10)** demonstrated a true prevention-to-detection contrast. Microsoft Defender blocked the attack during Phase A, while disabling Defender in Phase B allowed the complete attack chain to execute, producing additional telemetry including registry artifacts, temporary files, and child process creation.
+
+The remaining techniques executed successfully in both phases. Comparing their results confirmed that Sysmon continued generating detailed endpoint telemetry and Wazuh consistently correlated the resulting events regardless of whether Microsoft Defender was enabled or disabled.
+
+This demonstrates that endpoint prevention and centralized monitoring provide complementary security capabilities. While Microsoft Defender may prevent attack execution, Sysmon and Wazuh continue to provide comprehensive visibility into attacker behavior for investigation and threat hunting.
+
+## Phase B Validation Summary
+
+| Technique | Phase A Outcome | Phase B Outcome | Prevention / Detection Comparison |
+|-----------|-----------------|-----------------|-----------------------------------|
+| T1059.001 Test 10 | Blocked by Microsoft Defender | Executed Successfully | Additional telemetry observed |
+| T1059.001 Test 15 | Executed Successfully | Executed Successfully | Consistent visibility |
+| T1112 Test 40 | Executed Successfully | Executed Successfully | Consistent visibility |
+| T1053.005 Test 7 | Executed Successfully | Executed Successfully | Consistent visibility |
+| T1547.001 Test 1 | Executed Successfully | Executed Successfully | Consistent visibility |
+
+---
+
+# Project Conclusions
+
+This project successfully demonstrated the deployment and validation of a Windows-based security monitoring environment using Sysmon and Wazuh. Multiple adversary techniques covering execution and persistence were simulated using Atomic Red Team to evaluate both endpoint prevention and centralized detection capabilities.
+
+Across both phases, Sysmon consistently generated detailed endpoint telemetry while Wazuh successfully ingested, correlated, and analyzed the resulting events. Comparing Microsoft Defender enabled and disabled scenarios demonstrated that endpoint prevention and security monitoring serve complementary roles: prevention reduces attacker success, while monitoring preserves visibility into attacker behavior regardless of the protection state.
+
+The completed lab validates an end-to-end detection pipeline from attack execution through endpoint logging, centralized collection, behavioral correlation, and analyst investigation, closely reflecting the workflow of a modern Security Operations Center (SOC).
