@@ -17,7 +17,7 @@ This methodology demonstrates both preventive security controls and detection en
 
 | Technique | ATT&CK ID | Phase A | Phase B |
 |------------|-----------|:------:|:------:|
-| PowerShell Fileless Script Execution | T1059.001 (Test 10) | ✅ | ⏳ |
+| PowerShell Fileless Script Execution | T1059.001 (Test 10) | ✅ | ✅ |
 | EncodedCommand Parameter Variations | T1059.001 (Test 15) | ✅ | ⏳ |
 | Registry Modification | T1112 | ✅ | ⏳ |
 | Scheduled Task | T1053.005 | ✅ | ⏳ |
@@ -694,3 +694,925 @@ Across the executed techniques, Wazuh successfully correlated process creation, 
 | Registry Run Keys | T1547.001 Test 1 | ✅ |
 
 All planned attack simulations for Phase A completed successfully, validating the complete telemetry pipeline from endpoint execution through Sysmon event generation to centralized detection within Wazuh.
+
+---
+
+# Phase B – Microsoft Defender Disabled
+
+## Overview
+
+Following the successful validation of Microsoft Defender's prevention capabilities during Phase A, Microsoft Defender Real-Time Protection was disabled to observe the complete execution of the attack chain without endpoint intervention.
+
+Unlike Phase A, where malicious activity was either prevented or partially interrupted, this phase focuses on validating detection and visibility after successful attack execution. The objective is to determine whether Sysmon and Wazuh continue to provide comprehensive telemetry even when preventive controls are absent.
+
+By comparing both phases, the effectiveness of the monitoring infrastructure can be evaluated independently of endpoint protection, demonstrating the distinction between attack prevention and attack detection.
+
+---
+
+# Technique 1 – PowerShell Fileless Script Execution
+
+## MITRE ATT&CK
+
+| Field | Value |
+|-------|-------|
+| Technique | Command and Scripting Interpreter: PowerShell |
+| ATT&CK ID | T1059.001 |
+| Atomic Test | Test #10 |
+| Atomic Test Name | PowerShell Fileless Script Execution |
+
+---
+
+## Objective
+
+Validate that the complete PowerShell fileless attack executes successfully after Microsoft Defender is disabled while confirming that Sysmon and Wazuh maintain complete visibility throughout the attack lifecycle.
+
+---
+
+## Attack Execution
+
+With Microsoft Defender disabled, the Atomic Red Team PowerShell Fileless Script Execution test was executed from the Windows 11 client.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/01-t1059.001-test10-phaseb-atomic-execution-success.png" width="900">
+</p>
+
+Unlike Phase A, the Atomic test completed successfully without being blocked by Microsoft Defender.
+
+### Execution Summary
+
+| Field | Value |
+|-------|-------|
+| Test Result | Success |
+| Exit Code | 0 |
+| Technique | T1059.001 |
+| Executor | PowerShell |
+| Behavior | Fileless PowerShell Execution |
+
+The encoded PowerShell payload executed successfully, allowing the remaining stages of the attack chain to complete.
+
+---
+
+## Registry Artifact Validation
+
+Following execution, the Windows Registry was inspected to confirm that the payload successfully created its registry artifact.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/02-t1059.001-test10-phaseb-run-key-validation.png" width="900">
+</p>
+
+Although the simulated payload did not create a traditional Run Key persistence entry, additional inspection identified the registry location created by the Atomic test.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/03-t1059.001-test10-phaseb-registry-artifact-validation.png" width="900">
+</p>
+
+The registry artifact located under **HKCU\Software\Classes\AtomicRedTeam** confirms that the encoded PowerShell payload successfully stored its data within the registry before executing it directly from memory, accurately simulating fileless malware behavior.
+
+---
+
+## Sysmon Telemetry Validation
+
+Because Microsoft Defender no longer interrupted execution, Sysmon recorded multiple stages of the attack.
+
+### File Creation
+
+The first observable artifact was the temporary PowerShell script created during execution.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/04-t1059.001-test10-phaseb-sysmon-file-create.png" width="900">
+</p>
+
+Sysmon Event ID 11 confirms that PowerShell generated a temporary script inside the user's temporary directory.
+
+---
+
+### PowerShell Process Execution
+
+Sysmon Process Create telemetry captured the complete encoded PowerShell command executed by Atomic Red Team.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/05-t1059.001-test10-phaseb-sysmon-powershell-process.png" width="900">
+</p>
+
+The captured command line includes the Base64-encoded payload, registry modification commands, and the subsequent in-memory execution of the decoded PowerShell content.
+
+---
+
+### Child Process Creation
+
+During execution, the payload launched additional Windows utilities as child processes.
+
+PowerShell executed **whoami.exe**.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/06-t1059.001-test10-phaseb-sysmon-whoami-child-process.png" width="900">
+</p>
+
+PowerShell also executed **hostname.exe**.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/07-t1059.001-test10-phaseb-sysmon-hostname-child-process.png" width="900">
+</p>
+
+Together, these Sysmon events provide a complete forensic timeline of the attack, from initial PowerShell execution through the creation of child processes initiated by the decoded payload.
+
+### Telemetry Summary
+
+| Field | Value |
+|-------|-------|
+| Event Source | Sysmon |
+| Event IDs | 1, 11 |
+| Primary Process | powershell.exe |
+| Child Processes | whoami.exe, hostname.exe |
+| Registry Artifact | HKCU\Software\Classes\AtomicRedTeam |
+| Forwarded to Wazuh | ✅ |
+
+---
+
+## Wazuh Detection
+
+Following successful execution, Wazuh Threat Hunting displayed multiple correlated detections generated from the endpoint.
+
+> **Note:** The Windows 11 client and the Wazuh server were operating with different system times during testing. Consequently, timestamps differ between the endpoint and SIEM while still representing the same attack execution.
+
+### Threat Hunting Overview
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/08-t1059.001-test10-phaseb-wazuh-alert-overview.png" width="900">
+</p>
+
+Unlike Phase A, where Microsoft Defender terminated execution early, Phase B produced significantly richer telemetry because the entire attack chain completed successfully.
+
+---
+
+### Registry-Based Process Execution
+
+Wazuh successfully captured the registry modification performed by **reg.exe**, including the complete encoded command responsible for creating the Atomic Red Team registry artifact.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/09-t1059.001-test10-phaseb-wazuh-registry-process-details.png" width="900">
+</p>
+
+---
+
+### Temporary Script Detection
+
+Sysmon File Create telemetry generated a Wazuh alert after PowerShell created a temporary script inside the user's temporary directory.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/10-t1059.001-test10-phaseb-wazuh-temp-script-detection.png" width="900">
+</p>
+
+The detection was mapped to **MITRE ATT&CK T1105 (Ingress Tool Transfer)** because executable content was created within a directory commonly abused by malware.
+
+---
+
+### Encoded PowerShell Detection
+
+The PowerShell Process Create event was also ingested by Wazuh, preserving the complete encoded command line generated by Atomic Red Team.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test10-PhaseB/11-t1059.001-test10-phaseb-wazuh-powershell-process-details.png" width="900">
+</p>
+
+The collected telemetry provides investigators with full command-line visibility, parent-child process relationships, registry activity, and execution context necessary for forensic analysis.
+
+---
+
+## Results
+
+| Validation | Status |
+|------------|:------:|
+| Atomic test executed | ✅ |
+| Fileless payload executed | ✅ |
+| Registry artifact created | ✅ |
+| Sysmon Process Create captured | ✅ |
+| Sysmon File Create captured | ✅ |
+| Child processes recorded | ✅ |
+| Wazuh correlated attack events | ✅ |
+| Complete attack chain observed | ✅ |
+
+---
+
+## Lessons Learned
+
+- Disabling Microsoft Defender allowed the entire attack chain to execute successfully, generating substantially richer telemetry.
+- Sysmon continued recording detailed endpoint activity independently of Microsoft Defender's protection state.
+- Wazuh successfully correlated multiple events, including PowerShell execution, registry modification, temporary file creation, and child process execution.
+- Comparing both phases demonstrates the distinction between preventive security controls and detection engineering, highlighting the importance of endpoint telemetry even when attacks are not prevented.
+
+---
+
+# Technique 2 – PowerShell EncodedCommand Parameter Variations
+
+## MITRE ATT&CK
+
+| Field | Value |
+|-------|-------|
+| Technique | Command and Scripting Interpreter: PowerShell |
+| ATT&CK ID | T1059.001 |
+| Atomic Test | Test #15 |
+| Atomic Test Name | ATHPowerShellCommandLineParameter – EncodedCommand parameter variations |
+
+---
+
+## Objective
+
+Validate that PowerShell execution using encoded command-line parameter variations completes successfully after Microsoft Defender is disabled while demonstrating end-to-end visibility through Sysmon and Wazuh.
+
+---
+
+## Attack Execution
+
+With Microsoft Defender Real-Time Protection disabled, Atomic Red Team Test #15 was executed from the Windows 11 endpoint.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test15-PhaseB/01-t1059.001-test15-phaseb-atomic-execution-success.png" width="900">
+</p>
+
+Unlike Phase A, the encoded PowerShell command completed successfully without endpoint intervention, allowing the remaining attack activity to execute.
+
+### Execution Summary
+
+| Field | Value |
+|-------|-------|
+| Test Result | Success |
+| Exit Code | 0 |
+| Technique | T1059.001 |
+| Executor | PowerShell |
+| Behavior | Encoded PowerShell Command Execution |
+
+The successful execution produced endpoint telemetry that was collected by Sysmon and forwarded to Wazuh for investigation.
+
+---
+
+## Sysmon Telemetry Validation
+
+After successful execution, Sysmon recorded multiple stages of the attack.
+
+### PowerShell Process Execution
+
+Sysmon Event ID 1 captured the complete PowerShell process together with the encoded command-line arguments used during execution.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test15-PhaseB/02-t1059.001-test15-phaseb-sysmon-powershell-process.png" width="900">
+</p>
+
+The telemetry includes the full command line, parent process information, execution context, integrity level, hashes, and user account.
+
+---
+
+### Temporary PowerShell Script Creation
+
+Sysmon Event ID 11 recorded the temporary PowerShell script generated during execution.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test15-PhaseB/03-t1059.001-test15-phaseb-sysmon-temp-script-creation.png" width="900">
+</p>
+
+The temporary **__PSScriptPolicyTest** file demonstrates PowerShell's execution workflow and provides an additional forensic artifact generated during the attack.
+
+---
+
+### Child Process Execution
+
+The decoded PowerShell payload subsequently launched **whoami.exe**, which was captured by Sysmon Process Create telemetry.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test15-PhaseB/04-t1059.001-test15-phaseb-sysmon-whoami-child-process.png" width="900">
+</p>
+
+This confirms that the encoded PowerShell command progressed beyond initial execution and successfully spawned additional child processes.
+
+### Telemetry Summary
+
+| Field | Value |
+|-------|-------|
+| Event Source | Sysmon |
+| Event IDs | 1, 11 |
+| Primary Process | powershell.exe |
+| Child Process | whoami.exe |
+| Temporary Artifact | __PSScriptPolicyTest |
+| Forwarded to Wazuh | ✅ |
+
+---
+
+## Wazuh Detection Analysis
+
+Following execution, Wazuh Threat Hunting displayed multiple correlated detections generated from the endpoint.
+
+> **Note:** The Windows 11 client and the Wazuh server were operating with different system times during testing. Consequently, timestamps differ between the endpoint and SIEM while still representing the same attack execution.
+
+### Threat Hunting Overview
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test15-PhaseB/05-t1059.001-test15-phaseb-wazuh-alert-overview.png" width="900">
+</p>
+
+The encoded PowerShell execution generated multiple behavioral detections rather than a single isolated alert.
+
+---
+
+### Discovery Activity
+
+Among the correlated events, Wazuh identified discovery-related activity generated during execution.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test15-PhaseB/06-t1059.001-test15-phaseb-wazuh-discovery-activity.png" width="900">
+</p>
+
+The executed payload triggered discovery behavior, demonstrating that successful PowerShell execution can produce telemetry spanning multiple ATT&CK tactics beyond simple command execution.
+
+---
+
+### PowerShell-Created Executable Detection
+
+Wazuh also generated a behavioral alert indicating that PowerShell created executable content within a commonly abused Windows directory.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test15-PhaseB/07-t1059.001-test15-phaseb-wazuh-powershell-created-executable.png" width="900">
+</p>
+
+This detection was generated from the Sysmon File Create event and highlights how Wazuh applies behavioral analytics to endpoint telemetry.
+
+---
+
+### SecEdit Process Analysis
+
+Further investigation revealed that the executed PowerShell command launched **SecEdit.exe**, which Wazuh identified as a suspicious process because it originated from PowerShell.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1059.001-Test15-PhaseB/08-t1059.001-test15-phaseb-wazuh-secedit-process-details.png" width="900">
+</p>
+
+Inspection of the underlying Sysmon Process Create event shows that **SecEdit.exe** was executed with command-line arguments used to export the local security policy before the temporary files were removed.
+
+This behavior demonstrates how Wazuh preserves the complete execution context, allowing investigators to reconstruct attacker activity from individual endpoint events.
+
+---
+
+## Results
+
+| Validation | Status |
+|------------|:------:|
+| Atomic test executed | ✅ |
+| Encoded PowerShell executed | ✅ |
+| Sysmon Process Create captured | ✅ |
+| Sysmon File Create captured | ✅ |
+| Child process recorded | ✅ |
+| Wazuh correlated attack events | ✅ |
+| Discovery activity detected | ✅ |
+| Complete attack chain observed | ✅ |
+
+---
+
+## Lessons Learned
+
+- Successful encoded PowerShell execution produces significantly richer endpoint telemetry than blocked executions.
+- Sysmon captures both the initial PowerShell execution and the subsequent processes spawned by the decoded payload.
+- Wazuh correlates multiple behavioral detections from a single encoded PowerShell execution, including process creation, temporary file creation, discovery activity, and security policy inspection.
+- Behavioral analytics provide valuable investigative context even when the executed command is heavily obfuscated.
+
+---
+
+# Technique 3 – Registry Modification
+
+## MITRE ATT&CK
+
+| Field | Value |
+|-------|-------|
+| Technique | Modify Registry |
+| ATT&CK ID | T1112 |
+| Atomic Test | Test #40 |
+| Atomic Test Name | NetWire RAT Registry Key Creation |
+
+---
+
+## Objective
+
+Validate that registry-based persistence artifacts are successfully created after Microsoft Defender is disabled while confirming that Sysmon captures the resulting registry modifications and Wazuh correlates the associated persistence behavior for investigation.
+
+---
+
+## Attack Execution
+
+With Microsoft Defender Real-Time Protection disabled, Atomic Red Team Test #40 was executed from the Windows 11 endpoint.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1112-Test40-PhaseB/01-t1112-test40-phaseb-atomic-execution-success.png" width="900">
+</p>
+
+Unlike Phase A, the Atomic test completed successfully without endpoint intervention, allowing the simulated persistence artifacts to be written to the Windows Registry.
+
+### Execution Summary
+
+| Field | Value |
+|-------|-------|
+| Test Result | Success |
+| Exit Code | 0 |
+| Technique | T1112 |
+| Behavior | Registry Modification |
+| Simulated Threat | NetWire RAT |
+
+The successful execution established registry artifacts commonly associated with Windows persistence techniques and generated endpoint telemetry for investigation.
+
+---
+
+## Registry Artifact Validation
+
+After execution, the Windows Registry was inspected to verify that the expected persistence artifacts had been successfully created.
+
+### Registry Run Key
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1112-Test40-PhaseB/02-t1112-test40-phaseb-run-key-validation.png" width="900">
+</p>
+
+The Atomic test created a new **NetWire** value beneath the current user's **Run** registry key.
+
+The registry value references a simulated executable stored within the user's **AppData** directory, representing a persistence mechanism that automatically executes during user logon.
+
+---
+
+### NetWire Registry Configuration
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1112-Test40-PhaseB/03-t1112-test40-phaseb-netwire-registry-artifact.png" width="900">
+</p>
+
+Additional configuration values were created beneath **HKCU\Software\NetWire**, including simulated malware configuration data such as **HostId** and **Install Date**.
+
+Together, these registry artifacts demonstrate that the Atomic test successfully established both persistence and supporting malware configuration within the Windows Registry.
+
+---
+
+## Sysmon Telemetry Validation
+
+Successful execution generated multiple Sysmon events documenting the registry modifications.
+
+### Registry Value Modification
+
+Sysmon Event ID 13 recorded the modification of the Windows Run Key responsible for persistence.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1112-Test40-PhaseB/04-t1112-test40-phaseb-sysmon-run-key-registry-value.png" width="900">
+</p>
+
+The event captures the modified registry path, the value written by the attack, the executing process, and the associated user account, providing investigators with complete forensic context surrounding the persistence mechanism.
+
+---
+
+### Registry Process Creation
+
+Sysmon Process Create telemetry recorded the execution of **reg.exe** responsible for performing the registry modifications.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1112-Test40-PhaseB/05-t1112-test40-phaseb-sysmon-reg-process-create.png" width="900">
+</p>
+
+The captured command line includes the complete sequence of registry operations performed during the Atomic test, including creation of the **Run** key persistence entry together with the additional **NetWire** configuration values.
+
+### Telemetry Summary
+
+| Field | Value |
+|-------|-------|
+| Event Source | Sysmon |
+| Event IDs | 1, 13 |
+| Primary Process | reg.exe |
+| Registry Artifact | HKCU\Software\Microsoft\Windows\CurrentVersion\Run\NetWire |
+| Additional Artifact | HKCU\Software\NetWire |
+| Forwarded to Wazuh | ✅ |
+
+---
+
+## Wazuh Detection Analysis
+
+Following execution, Wazuh Threat Hunting displayed multiple correlated detections generated from the endpoint.
+
+> **Note:** The Windows 11 client and the Wazuh server were operating with different system times during testing. Consequently, timestamps differ between the endpoint and SIEM while still representing the same attack execution.
+
+### Threat Hunting Overview
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1112-Test40-PhaseB/06-t1112-test40-phaseb-wazuh-alert-overview.png" width="900">
+</p>
+
+Rather than producing a single alert, Wazuh correlated multiple events generated throughout the registry modification, including process creation telemetry, registry persistence activity, and behavioral detections associated with the modified registry location.
+
+---
+
+### Registry Persistence Analysis
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1112-Test40-PhaseB/07-t1112-test40-phaseb-wazuh-run-key-details.png" width="900">
+</p>
+
+Inspection of the correlated Sysmon Event ID 13 reveals that **reg.exe** modified the Windows **Run** registry key to establish persistence using the simulated NetWire executable.
+
+Although the executed Atomic test is categorized as **MITRE ATT&CK T1112 (Modify Registry)**, the resulting behavior represents **Registry Run Keys / Startup Folder (T1547.001)** because the modified registry location is executed automatically during user logon.
+
+This demonstrates that Wazuh classifies activity according to the security impact of the behavior rather than simply identifying the originating Atomic test.
+
+---
+
+## Results
+
+| Validation | Status |
+|------------|:------:|
+| Atomic test executed | ✅ |
+| Registry persistence created | ✅ |
+| Registry artifacts validated | ✅ |
+| Sysmon Event ID 13 captured | ✅ |
+| Sysmon Process Create captured | ✅ |
+| Wazuh correlated registry activity | ✅ |
+| Persistence behavior identified | ✅ |
+| Complete attack chain observed | ✅ |
+
+---
+
+## Lessons Learned
+
+- Successful registry modification provides significantly richer telemetry than blocked execution.
+- Sysmon Event ID 13 captures detailed registry modification data, including the affected registry path, written value, and responsible process.
+- Registry Run Keys remain one of the most common Windows persistence mechanisms leveraged by adversaries.
+- Wazuh correlates registry activity according to the resulting persistence behavior, allowing investigators to reconstruct both the registry modification and its security impact.
+
+---
+
+# Technique 4 – Scheduled Task
+
+## MITRE ATT&CK
+
+| Field | Value |
+|-------|-------|
+| Technique | Scheduled Task/Job: Scheduled Task |
+| ATT&CK ID | T1053.005 |
+| Atomic Test | Test #7 |
+| Atomic Test Name | Scheduled Task Executing Base64 Encoded Commands From Registry |
+
+---
+
+## Objective
+
+Validate that a scheduled task executing a Base64-encoded PowerShell payload from the Windows Registry successfully executes after Microsoft Defender is disabled while confirming that Sysmon captures the resulting persistence activity and Wazuh correlates the associated behavioral detections.
+
+---
+
+## Attack Execution
+
+With Microsoft Defender Real-Time Protection disabled, Atomic Red Team Test #7 was executed from the Windows 11 endpoint.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/01-t1053.005-test7-phaseb-atomic-execution-success.png" width="900">
+</p>
+
+Unlike Phase A, the Atomic test completed successfully without endpoint intervention, allowing the complete persistence mechanism to be created.
+
+### Execution Summary
+
+| Field | Value |
+|-------|-------|
+| Test Result | Success |
+| Exit Code | 0 |
+| Technique | T1053.005 |
+| Behavior | Scheduled Task Persistence |
+
+The Atomic Red Team framework successfully created a scheduled task that retrieves a Base64-encoded PowerShell payload from the Windows Registry and executes it using PowerShell.
+
+---
+
+## Persistence Artifact Validation
+
+Following execution, Windows Task Scheduler was inspected to verify that the persistence mechanism had been created successfully.
+
+### Scheduled Task Properties
+
+<p align="center">
+<img src="..\images\12-Attack-Simulation\T1053.005-Test7-PhaseB\02-t1053.005-test7-phaseb-task-scheduler-general.png.png" width="750">
+</p>
+
+The scheduled task **ATOMIC-T1053.005** was successfully created and configured to execute under the Administrator account.
+
+---
+
+### Scheduled Trigger
+
+Inspection of the task trigger confirms that the scheduled task is configured to execute automatically every day at **7:45 AM**.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/03-t1053.005-test7-phaseb-task-scheduler-triggers.png" width="700">
+</p>
+
+The configured trigger establishes a persistence mechanism capable of repeatedly executing the malicious payload without additional user interaction.
+
+---
+
+### Scheduled Action
+
+The Actions tab reveals the command executed by the scheduled task.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/04-t1053.005-test7-phaseb-task-scheduler-actions.png" width="900">
+</p>
+
+The scheduled task launches **PowerShell** using a command that retrieves a Base64-encoded value stored within the Windows Registry, decodes the content, and executes it directly from memory.
+
+This behavior closely resembles persistence techniques commonly used by malware families that conceal malicious payloads within registry values to reduce their on-disk footprint.
+
+---
+
+### Registry Payload Validation
+
+The Windows Registry was inspected to verify that the encoded payload referenced by the scheduled task had been created successfully.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/05-t1053.005-test7-phaseb-registry-base64-payload.png" width="850">
+</p>
+
+The registry key **HKCU\Software\ATOMIC-T1053.005** contains the Base64-encoded PowerShell payload that is retrieved and executed by the scheduled task.
+
+Together, the scheduled task configuration and registry artifact confirm that the complete persistence mechanism was successfully established on the endpoint.
+
+---
+
+## Sysmon Telemetry Validation
+
+Successful execution generated multiple Sysmon Process Create events documenting each stage of the persistence mechanism.
+
+### Scheduled Task Creation
+
+Sysmon Event ID 1 captured the execution of **schtasks.exe** responsible for creating the persistence task.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/06-t1053.005-test7-phaseb-sysmon-schtasks-process-create.png" width="900">
+</p>
+
+The captured command line contains the complete scheduled task configuration, including the task name, execution trigger, and the embedded PowerShell command responsible for decoding and executing the registry payload.
+
+---
+
+### Command Processor Execution
+
+Sysmon also captured the parent **cmd.exe** process responsible for creating both the registry value and the scheduled task.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/07-t1053.005-test7-phaseb-sysmon-cmd-process-create.png" width="900">
+</p>
+
+The command line clearly demonstrates the complete attack chain by combining:
+
+- Registry modification
+- Scheduled task creation
+- PowerShell execution
+- Base64 payload retrieval
+
+within a single command.
+
+### Telemetry Summary
+
+| Field | Value |
+|-------|-------|
+| Event Source | Sysmon |
+| Event ID | 1 |
+| Primary Processes | cmd.exe, schtasks.exe |
+| Persistence Mechanism | Scheduled Task |
+| Registry Artifact | HKCU\Software\ATOMIC-T1053.005 |
+| Forwarded to Wazuh | ✅ |
+
+---
+
+## Wazuh Detection Analysis
+
+Following successful execution, Wazuh Threat Hunting displayed multiple correlated detections generated from the endpoint.
+
+> **Note:** The Windows 11 client and the Wazuh server were operating with different system times during testing. Consequently, timestamps differ between the endpoint and SIEM while still representing the same attack execution.
+
+### Threat Hunting Overview
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/08-t1053.005-test7-phaseb-wazuh-threat-hunting-overview.png" width="900">
+</p>
+
+Rather than producing a single alert, Wazuh correlated several behavioral events generated throughout the persistence workflow.
+
+The investigation revealed alerts associated with process creation, registry modification, scheduled task creation, and command-line activity.
+
+---
+
+### Base64 Registry Detection
+
+Wazuh generated a behavioral detection after identifying a Base64-like value being written to the Windows Registry.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/09-t1053.005-test7-phaseb-wazuh-base64-registry-detection.png" width="900">
+</p>
+
+Inspection of the underlying Sysmon event confirms that **reg.exe** created the registry value containing the encoded PowerShell payload before the scheduled task was registered.
+
+This alert demonstrates Wazuh's ability to identify suspicious registry content rather than simply detecting the registry modification itself.
+
+---
+
+### Suspicious Command Shell Execution
+
+Wazuh also generated a behavioral alert after detecting the execution of a complex command through **cmd.exe**.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1053.005-Test7-PhaseB/10-t1053.005-test7-phaseb-wazuh-suspicious-cmd-execution.png" width="900">
+</p>
+
+Inspection of the correlated Sysmon Process Create event shows that the command simultaneously performed multiple operations:
+
+- Creating a registry value
+- Registering a scheduled task
+- Configuring PowerShell execution
+- Retrieving a Base64-encoded payload from the registry
+
+The complete command line preserved by Wazuh enables investigators to reconstruct the entire persistence workflow from a single endpoint event.
+
+---
+
+## Results
+
+| Validation | Status |
+|------------|:------:|
+| Atomic test executed | ✅ |
+| Scheduled task created | ✅ |
+| Registry payload created | ✅ |
+| Persistence artifacts validated | ✅ |
+| Sysmon Process Create captured | ✅ |
+| Wazuh correlated attack events | ✅ |
+| Base64 registry detection generated | ✅ |
+| Complete attack chain observed | ✅ |
+
+---
+
+## Lessons Learned
+
+- Scheduled Tasks remain one of the most common persistence mechanisms leveraged by adversaries.
+- Storing encoded payloads within the Windows Registry provides an additional layer of obfuscation while reducing the attacker's on-disk footprint.
+- Sysmon captures the complete persistence workflow, including registry modification, scheduled task creation, and command execution.
+- Wazuh correlates multiple behavioral detections generated from a single persistence technique, providing investigators with sufficient context to reconstruct the entire attack chain.
+
+---
+
+# Technique 5 – Registry Run Keys / Startup Folder
+
+## MITRE ATT&CK
+
+| Field | Value |
+|-------|-------|
+| Technique | Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder |
+| ATT&CK ID | T1547.001 |
+| Atomic Test | Test #1 |
+| Atomic Test Name | Reg Key Run |
+
+---
+
+## Objective
+
+Validate that a Windows Registry Run Key persistence mechanism executes successfully after Microsoft Defender is disabled while confirming that Sysmon captures the resulting registry modifications and Wazuh correlates the associated persistence activity.
+
+---
+
+## Attack Execution
+
+With Microsoft Defender Real-Time Protection disabled, Atomic Red Team Test #1 was executed from the Windows 11 endpoint.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1547.001-Test1-PhaseB/01-t1547.001-test1-phaseb-atomic-execution-success.png" width="900">
+</p>
+
+Unlike Phase A, the Atomic test completed successfully without endpoint intervention, creating a Registry Run Key persistence mechanism.
+
+### Execution Summary
+
+| Field | Value |
+|-------|-------|
+| Test Result | Success |
+| Exit Code | 0 |
+| Technique | T1547.001 |
+| Behavior | Registry Run Key Persistence |
+
+The Atomic Red Team framework successfully created the Registry Run Key persistence artifact.
+
+---
+
+## Persistence Artifact Validation
+
+Following execution, the Windows Registry was inspected to verify that the expected persistence artifact had been created successfully.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1547.001-Test1-PhaseB/02-t1547.001-test1-phaseb-registry-run-key-validation.png" width="900">
+</p>
+
+Inspection of **HKCU\Software\Microsoft\Windows\CurrentVersion\Run** confirms that a new registry value named **Atomic Red Team** was successfully created.
+
+The registry value references the simulated executable **C:\Path\AtomicRedTeam.exe**, demonstrating a Registry Run Key persistence mechanism that automatically executes whenever the user logs on.
+
+---
+
+## Sysmon Telemetry Validation
+
+Successful execution generated multiple Sysmon events documenting the persistence activity.
+
+### Registry Value Modification
+
+Sysmon Event ID **13** recorded the creation of the Registry Run Key.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1547.001-Test1-PhaseB/03-t1547.001-test1-phaseb-sysmon-registry-value-set.png" width="900">
+</p>
+
+The event captures the modified registry path, the value written to the Run Key, and the responsible process, providing complete forensic context surrounding the persistence mechanism.
+
+---
+
+### Registry Process Creation
+
+Sysmon Event ID **1** captured the execution of **reg.exe**, which created the Registry Run Key.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1547.001-Test1-PhaseB/04-t1547.001-test1-phaseb-sysmon-reg-process-create.png" width="900">
+</p>
+
+The captured command line includes the complete registry operation, including the registry path, value name, and data written by the Atomic test.
+
+### Telemetry Summary
+
+| Field | Value |
+|-------|-------|
+| Event Source | Sysmon |
+| Event IDs | 1, 13 |
+| Primary Process | reg.exe |
+| Parent Process | cmd.exe |
+| Persistence Mechanism | Registry Run Key |
+| Registry Path | HKCU\Software\Microsoft\Windows\CurrentVersion\Run |
+| Forwarded to Wazuh | ✅ |
+
+---
+
+## Wazuh Detection Analysis
+
+Following successful execution, Wazuh Threat Hunting displayed multiple correlated detections generated from the endpoint.
+
+> **Note:** The Windows 11 client and the Wazuh server were operating with different system times during testing. Consequently, timestamps differ between the endpoint and SIEM while still representing the same attack execution.
+
+### Threat Hunting Overview
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1547.001-Test1-PhaseB/05-t1547.001-test1-phaseb-wazuh-threat-hunting-overview.png" width="900">
+</p>
+
+The attack generated several correlated alerts, including process creation telemetry, Registry Run Key persistence detection, and behavioral analysis of the registry content.
+
+---
+
+### Registry Run Key Persistence Detection
+
+Wazuh generated **Rule 92302**, identifying the registry modification as a Registry Run Key persistence technique.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1547.001-Test1-PhaseB/06-t1547.001-test1-phaseb-wazuh-run-key-persistence-detection.png" width="900">
+</p>
+
+The alert is mapped to **MITRE ATT&CK T1547.001 (Registry Run Keys / Startup Folder)** and is based on the underlying Sysmon Event ID 13 generated by **reg.exe**.
+
+The event records the modified registry path, the created value, and the executable configured to launch automatically during user logon.
+
+---
+
+### Base64 Registry Detection
+
+Wazuh also generated **Rule 92041**, indicating that the registry value matched a Base64-like pattern.
+
+<p align="center">
+<img src="../images/12-Attack-Simulation/T1547.001-Test1-PhaseB/07-t1547.001-test1-phaseb-wazuh-base64-registry-detection.png" width="900">
+</p>
+
+Although this Atomic test primarily demonstrates Registry Run Key persistence, Wazuh simultaneously applied additional behavioral analysis to the registry value, generating an independent detection based on its content.
+
+This illustrates how multiple detection rules can be triggered from a single registry modification.
+
+---
+
+## Results
+
+| Validation | Status |
+|------------|:------:|
+| Atomic test executed | ✅ |
+| Registry Run Key created | ✅ |
+| Persistence artifact validated | ✅ |
+| Sysmon Event ID 13 generated | ✅ |
+| Sysmon Process Create generated | ✅ |
+| Wazuh detected Registry Run Key persistence | ✅ |
+| Detection pipeline validated | ✅ |
+
+---
+
+## Lessons Learned
+
+- Registry Run Keys remain one of the most common Windows persistence mechanisms leveraged by adversaries.
+- Sysmon provides detailed visibility into both registry modifications and the processes responsible for creating them.
+- Wazuh successfully correlates Registry Run Key persistence with additional behavioral detections generated during the same execution.
+- Consistent telemetry from Sysmon and Wazuh demonstrates that Windows persistence techniques remain highly visible even when Microsoft Defender is disabled.
