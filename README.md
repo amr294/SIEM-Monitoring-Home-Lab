@@ -300,7 +300,7 @@ The documentation follows the implementation history of the lab. Documents `01â€
 
 | # | Documentation | Description |
 |---|---|---|
-| 13 | [FortiGate Network Edge](docs/13-FortiGate-Network-Edge.md) | Deploy the FortiGate VM, configure the WAN/LAN edge, routing, DHCP, and dedicated lab network. |
+| 13 | [FortiGate Network Edge](docs/13-fortigate-network-edge.md) | Deploy the FortiGate VM, configure the WAN/LAN edge, routing, DHCP, and dedicated lab network. |
 | 14 | [FortiGate Remote Access VPN](docs/14-FortiGate-Remote-Access-VPN.md) | Implement and validate IKEv2/IPsec remote access over TCP/443 using FortiClient. |
 
 ---
