@@ -1,104 +1,386 @@
 # SIEM Monitoring Home Lab
 
-![Platform](https://img.shields.io/badge/Platform-Windows_Server_2022-blue)
+![Platform](https://img.shields.io/badge/Platform-Windows%20Server%202022-blue)
 ![SIEM](https://img.shields.io/badge/SIEM-Wazuh-green)
-![Telemetry](https://img.shields.io/badge/Sysmon-blueviolet)
-![Virtualization](https://img.shields.io/badge/VMware-Workstation_Pro-orange)
-![Status](https://img.shields.io/badge/Status-In_Progress-yellow)
+![Endpoint Telemetry](https://img.shields.io/badge/Telemetry-Sysmon-blueviolet)
+![Network Security](https://img.shields.io/badge/Network%20Security-FortiGate-red)
+![Virtualization](https://img.shields.io/badge/Virtualization-VMware%20%7C%20KVM-orange)
+![Status](https://img.shields.io/badge/Status-In%20Progress-yellow)
 
 ## Project Overview
 
-This project demonstrates the design, deployment, and validation of an enterprise-style Security Information and Event Management (SIEM) home lab. The environment simulates a Windows enterprise network by integrating Active Directory, Group Policy, Sysmon endpoint telemetry, and a native Wazuh SIEM deployment to collect, analyze, and validate security events. 
+The **SIEM Monitoring Home Lab** is an evolving security lab built to simulate and investigate security activity across enterprise-style Windows infrastructure, endpoint telemetry, SIEM monitoring, adversary simulation, and network security controls.
 
-The project is currently transitioning from infrastructure deployment to adversary simulation, detection engineering, and threat hunting using realistic attack scenarios.
+The project was built incrementally rather than as a single deployment. The initial environment focused on establishing a Windows enterprise foundation with Active Directory, DNS, Group Policy, Sysmon, and Wazuh. Controlled attack simulation was then introduced to generate security telemetry and validate visibility across the endpoint and SIEM layers.
 
-Unlike installation tutorials, this repository documents an end-to-end enterprise security lab built incrementally, including deployment decisions, validation procedures, troubleshooting, and detection engineering.
+The environment has since been expanded with a virtualized FortiGate network-security layer running on an Ubuntu Server host using KVM/libvirt. The FortiGate provides the network edge for the dedicated lab network and has been extended with a remote-access IKEv2/IPsec VPN over TCP/443.
 
-## Lab Architecture
+The current lab therefore combines **identity, endpoint, SIEM, adversary simulation, and network-security capabilities**, while additional telemetry integration and security-operations workflows remain planned.
 
-<p align="center">
-  <img src="images/architecture/lab-architecture.png" width="900">
-</p>
+---
 
-<p align="center">
-Enterprise Active Directory environment integrated with a native Wazuh SIEM deployment.
-</p>
+## Current Architecture
 
-## Technologies
+```mermaid
+flowchart TB
+    LAB[SIEM Monitoring Home Lab]
 
-- VMware Workstation Pro
+    LAB --> EDGE[Network Security Edge]
+    LAB --> SIEM[Windows / SIEM Environment]
+
+    EDGE --> ROUTER[Home Router / Internet]
+    EDGE --> UBUNTU[amr-server<br/>Ubuntu Server]
+    UBUNTU --> KVM[KVM / libvirt]
+    KVM --> FGT[FortiGate-VM]
+
+    FGT --> WAN[WAN / port1<br/>192.168.122.78/24]
+    FGT --> LAN[LAN / port2<br/>10.10.10.1/24<br/>10.10.10.0/24]
+
+    REMOTE[External Client<br/>FortiClient]
+    REMOTE -->|IKEv2 / IPsec<br/>TCP/443| FGT
+
+    SIEM --> VMWARE[VMware Workstation<br/>NAT / Virtual Network]
+    VMWARE --> DC[DC01<br/>Windows Server 2022<br/>Active Directory / DNS]
+    VMWARE --> WIN11[WIN11-CLIENT<br/>Windows 11]
+    VMWARE -->|NAT / virtual networking| LAN
+
+    DC --> SYS1[Sysmon]
+    WIN11 --> SYS2[Sysmon]
+    SYS1 --> WAZUH[Wazuh<br/>Native on amr-server]
+    SYS2 --> WAZUH
+
+    FGT -.->|Future: FortiGate log integration| WAZUH
+    FUTURE[Future: Network + Endpoint Correlation]
+    FGT -.-> FUTURE
+    WAZUH -.-> FUTURE
+```
+
+> **Current-state note:** Solid paths represent currently implemented components and relationships. Dashed paths represent planned work and are not currently implemented.
+
+For the detailed architecture, network boundaries, implementation status, and planned integration, see [Current Lab Architecture](docs/00-Current-Lab-Architecture.md).
+
+---
+
+## Project Scope
+
+The lab is being developed around several complementary security capabilities:
+
+- **Enterprise Windows Infrastructure** — Windows Server, Active Directory, DNS, Group Policy, and Windows 11.
+- **Endpoint Telemetry** — Windows Security auditing and Sysmon.
+- **SIEM Monitoring** — Native Wazuh deployment with endpoint agents and centralized event collection.
+- **Adversary Simulation** — Controlled security testing using Atomic Red Team techniques.
+- **Network Security** — FortiGate virtual firewall providing routing, firewall enforcement, network-edge control, and remote-access VPN capability.
+- **Security Operations** — Planned correlation of endpoint and network telemetry, followed by detection engineering and threat-hunting workflows.
+
+The project intentionally documents both successful implementation and troubleshooting. Configuration decisions, validation evidence, and implementation problems are retained where they provide useful technical context.
+
+---
+
+## Project Evolution
+
+The lab has developed through several implementation stages:
+
+### 1. Core Infrastructure
+
+The project began with the design and deployment of the virtualization environment and Windows Server infrastructure.
+
+### 2. Enterprise Windows Environment
+
+Active Directory, DNS, organizational structure, user management, Group Policy, and the Windows 11 workstation were introduced to create the enterprise-style Windows foundation.
+
+### 3. Endpoint Visibility
+
+Sysmon and Windows auditing were configured to generate detailed endpoint telemetry.
+
+### 4. SIEM Deployment
+
+Wazuh was deployed natively on the Ubuntu `amr-server` host, followed by Wazuh agents on the Windows endpoints.
+
+### 5. Security Validation
+
+Atomic Red Team techniques were used to generate controlled security activity and validate endpoint telemetry and SIEM visibility.
+
+### 6. Network Security Expansion
+
+A FortiGate virtual firewall was introduced using KVM/libvirt on the Ubuntu host. The FortiGate provides the network edge for the dedicated lab network.
+
+### 7. Remote Access
+
+The FortiGate environment was extended with an IKEv2/IPsec remote-access VPN over TCP/443 and validated using FortiClient and FortiGate-side diagnostics.
+
+### 8. Planned Integration
+
+Future work will focus on network telemetry integration, endpoint/network correlation, detection engineering, and additional security-operations workflows.
+
+---
+
+## Technology Stack
+
+### Infrastructure & Virtualization
+
+- Ubuntu Server — `amr-server` host
+- VMware Workstation Pro — Windows lab virtualization
+- KVM / libvirt — FortiGate virtualization
+
+### Windows & Identity
+
 - Windows Server 2022
-- Windows 11
-- Kali Linux
+- Windows 11 Pro
 - Active Directory Domain Services (AD DS)
 - DNS
+- Group Policy
 - PowerShell
-- Sysmon
-- Wazuh
 
-## Project Progress
+### Endpoint Security & Telemetry
+
+- Sysmon
+- Windows Security Event Logging
+- Wazuh Agents
+
+### SIEM
+
+- Wazuh Manager
+- Wazuh Indexer
+- Filebeat
+- Wazuh Dashboard
+
+### Network Security
+
+- FortiGate-VM
+- FortiOS
+- Firewall policies
+- Static routing
+- DHCP
+- IKEv2 / IPsec Remote-Access VPN
+- IPsec over TCP/443
+
+### Security Testing
+
+- Atomic Red Team
+- MITRE ATT&CK techniques
+
+---
+
+## Implementation Progress
+
+### Core Infrastructure
 
 - [x] Lab planning and architecture design
 - [x] VMware Workstation environment
 - [x] Windows Server 2022 installation
 - [x] Network configuration and troubleshooting
-- [x] Active Directory Domain Services (AD DS) deployment
+
+### Windows Enterprise Environment
+
+- [x] Active Directory Domain Services (AD DS)
 - [x] Domain Controller promotion
 - [x] DNS installation and integration
 - [x] Organizational Unit (OU) design
 - [x] User and Security Group management
-- [x] Windows 11 workstation deployment and domain join
+- [x] Windows 11 workstation deployment
+- [x] Active Directory domain join
 - [x] Group Policy configuration
+
+### Endpoint Telemetry
+
 - [x] Sysmon deployment
-- [x] Wazuh SIEM deployment
+- [x] Windows Security auditing
 - [x] Wazuh agent deployment
-- [ ] Attack simulation (in progress)
-- [ ] Detection engineering and analysis (planned)
+- [x] Endpoint telemetry validation
 
-## Lab Components
+### SIEM
 
-The home lab consists of:
+- [x] Native Wazuh deployment on Ubuntu
+- [x] Wazuh Manager configuration
+- [x] Wazuh Indexer configuration
+- [x] Filebeat integration
+- [x] Wazuh Dashboard
+- [x] Windows endpoint integration
+- [x] Event collection validation
 
-- Windows Server 2022 (Domain Controller)
-- Windows 11 Client
-- Kali Linux Attacker Machine
-- Wazuh SIEM Server
-- VMware Workstation Pro virtual network
+### Security Validation
 
-## 📚 Documentation
+- [x] Atomic Red Team attack simulation
+- [x] Endpoint telemetry validation
+- [x] SIEM visibility validation
 
-The lab is documented step by step, covering the complete deployment process from infrastructure planning to security monitoring. Each document includes configuration details, screenshots, validation steps, and troubleshooting notes where applicable.
+### Network Security
 
-| Step | Documentation | Description |
-|------|---------------|-------------|
-| 01 | [Lab Planning](docs/01-Lab-Planning.md) | Define the project scope, objectives, and lab architecture. |
-| 02 | [VMware Setup](docs/02-VMware-Setup.md) | Create the virtual networking environment and virtual machines. |
-| 03 | [Windows Server Installation](docs/03-Windows-Server-Installation.md) | Install Windows Server 2022 and perform the initial system configuration. |
-| 04 | [Network Configuration and VMware Troubleshooting](docs/04-Network-Configuration-and-Troubleshooting.md) | Configure networking, troubleshoot connectivity issues, and validate VMware NAT functionality. |
-| 05 | [Active Directory Domain Services (AD DS) Installation](docs/05-Active-Directory-Domain-Services-Installation.md) | Install the AD DS role, create the first forest, and promote the server to a Domain Controller. |
-| 06 | [Organizational Units and User Management](docs/06-Organizational-Units-and-User-Management.md) | Design the Active Directory OU structure, create users and security groups, and implement role-based access control (RBAC). |
-| 07 | [Workstation Deployment and Domain Join](docs/07-Workstation-Deployment-and-Domain-Join.md) | Deploy a Windows 11 Pro workstation, configure networking, install VMware Tools, join the workstation to the Active Directory domain, and organize the computer object within the Workstations OU. |
-| 08 | [Group Policy Configuration](docs/08-Group-Policy-Configuration.md) | Configure enterprise audit policies, enable command-line process logging, and validate Windows Security Event ID 4688 generation. |
-| 09 | [Endpoint Telemetry with Sysmon](docs/09-Sysmon-Deployment.md) | Deploy Sysmon on the Domain Controller and Windows 11 client, validate endpoint telemetry, and confirm dynamic configuration updates. |
-| 10 | [Wazuh SIEM Deployment](docs/10-Wazuh-SIEM-Deployment.md) | Deploy the Wazuh SIEM platform using a native Ubuntu installation, configure secure TLS communication, integrate the Indexer, Manager, Filebeat, and Dashboard, validate the complete event pipeline, and document troubleshooting throughout the deployment. |
-| 11 | [Wazuh Agent Deployment](docs/11-Wazuh-Agent-Deployment.md) | Deploy and register Wazuh agents on the Domain Controller and Windows 11 client, validate endpoint communication, troubleshoot Sysmon telemetry ingestion, and confirm successful event collection across both endpoints. |
-12 | [Attack Simulation](docs/12-Attack-Simulation.md) | Execute Atomic Red Team techniques, validate endpoint telemetry, investigate detections, and verify end-to-end SIEM visibility.
-13 | *Coming Soon* | Detection Engineering
+- [x] FortiGate-VM deployment
+- [x] KVM/libvirt integration
+- [x] FortiGate WAN/LAN configuration
+- [x] Routing configuration
+- [x] DHCP configuration
+- [x] Dedicated lab network
+- [x] FortiGate network edge implementation
+- [x] Remote-access VPN
+- [x] IKEv2/IPsec over TCP/443
+- [x] FortiClient VPN validation
+- [x] IKE/IPsec Security Association validation
+- [x] Active tunnel and traffic validation
+
+### Planned
+
+- [ ] FortiGate log integration with Wazuh
+- [ ] Network and endpoint telemetry correlation
+- [ ] Detection engineering
+- [ ] Threat hunting workflows
+- [ ] Incident investigation scenarios
+- [ ] Additional attacker infrastructure
+
+---
+
+## Current Lab Components
+
+| Component | Role | Platform / Location | Current State |
+|---|---|---|---|
+| `amr-server` | Physical virtualization and SIEM host | Ubuntu Server | Active |
+| Wazuh | SIEM and centralized security monitoring | Native on `amr-server` | Active |
+| FortiGate-VM | Network security gateway, routing, firewall, and remote-access VPN | KVM/libvirt on `amr-server` | Active |
+| DC01 | Domain Controller, AD DS, and DNS | Windows Server 2022 / VMware | Active |
+| WIN11-CLIENT | Domain workstation and endpoint telemetry source | Windows 11 / VMware | Active |
+| Sysmon | Endpoint telemetry collection | DC01 and WIN11-CLIENT | Active |
+| Wazuh Agents | Endpoint log forwarding | DC01 and WIN11-CLIENT | Active |
+| VMware Workstation | Windows VM virtualization and virtual networking | Windows host | Active |
+| KVM / libvirt | FortiGate virtualization and WAN-side NAT networking | `amr-server` | Active |
+| FortiClient | Remote-access VPN client | External client | Used for VPN validation |
+| Atomic Red Team | Controlled adversary simulation | Windows lab | Used for security validation |
+| Kali Linux | Planned attacker platform | Not currently deployed | Planned |
+
+---
+
+## Documentation
+
+The documentation follows the implementation history of the lab. Documents `01–12` cover the original Windows/SIEM build, while `13–14` document the subsequent network-security expansion.
+
+### Architecture
+
+| # | Documentation | Description |
+|---|---|---|
+| 00 | [Current Lab Architecture](docs/00-Current-Lab-Architecture.md) | Current-state architecture, network boundaries, implemented components, and planned integration. |
+
+### Core Infrastructure
+
+| # | Documentation | Description |
+|---|---|---|
+| 01 | [Lab Planning](docs/01-Lab-Planning.md) | Define the project scope, objectives, and initial lab architecture. |
+| 02 | [VMware Setup](docs/02-VMware-Setup.md) | Create the virtualization environment, virtual networking, and lab VMs. |
+| 03 | [Windows Server Installation](docs/03-Windows-Server-Installation.md) | Install and initially configure Windows Server 2022. |
+| 04 | [Network Configuration and VMware Troubleshooting](docs/04-Network-Configuration-and-Troubleshooting.md) | Configure networking, troubleshoot connectivity, and validate VMware NAT functionality. |
+
+### Windows Enterprise Environment
+
+| # | Documentation | Description |
+|---|---|---|
+| 05 | [Active Directory Domain Services](docs/05-Active-Directory-Domain-Services-Installation.md) | Install AD DS, create the forest, and promote the Domain Controller. |
+| 06 | [Organizational Units and User Management](docs/06-Organizational-Units-and-User-Management.md) | Design OUs and configure users, groups, and access structure. |
+| 07 | [Workstation Deployment and Domain Join](docs/07-Workstation-Deployment-and-Domain-Join.md) | Deploy the Windows 11 workstation and join it to the domain. |
+| 08 | [Group Policy Configuration](docs/08-Group-Policy-Configuration.md) | Configure enterprise audit policies and validate Windows security event generation. |
+
+### Endpoint Telemetry
+
+| # | Documentation | Description |
+|---|---|---|
+| 09 | [Endpoint Telemetry with Sysmon](docs/09-Sysmon-Deployment.md) | Deploy Sysmon and validate endpoint telemetry across the Windows environment. |
+
+### SIEM
+
+| # | Documentation | Description |
+|---|---|---|
+| 10 | [Wazuh SIEM Deployment](docs/10-Wazuh-SIEM-Deployment.md) | Deploy and validate the native Wazuh platform on Ubuntu. |
+| 11 | [Wazuh Agent Deployment](docs/11-Wazuh-Agent-Deployment.md) | Deploy Wazuh agents and validate endpoint event collection. |
+
+### Security Validation
+
+| # | Documentation | Description |
+|---|---|---|
+| 12 | [Attack Simulation](docs/12-Attack-Simulation.md) | Execute controlled Atomic Red Team techniques and validate endpoint/SIEM visibility. |
+
+### Network Security
+
+| # | Documentation | Description |
+|---|---|---|
+| 13 | [FortiGate Network Edge](docs/13-FortiGate-Network-Edge.md) | Deploy the FortiGate VM, configure the WAN/LAN edge, routing, DHCP, and dedicated lab network. |
+| 14 | [FortiGate Remote Access VPN](docs/14-FortiGate-Remote-Access-VPN.md) | Implement and validate IKEv2/IPsec remote access over TCP/443 using FortiClient. |
+
+---
+
+## Current State & Roadmap
+
+The core Windows/SIEM environment and FortiGate network-security layer are operational. Remote-access VPN functionality has also been implemented and validated.
+
+The next stages focus on connecting the network-security layer with the existing SIEM environment and expanding the lab toward security-operations workflows.
+
+### Next Engineering Objectives
+
+- [ ] Integrate FortiGate security telemetry with Wazuh.
+- [ ] Validate FortiGate log ingestion and parsing.
+- [ ] Correlate network and endpoint telemetry.
+- [ ] Develop custom detection logic and rules.
+- [ ] Build investigation and threat-hunting scenarios.
+- [ ] Perform incident investigation using correlated telemetry.
+- [ ] Expand adversary simulation scenarios.
+- [ ] Deploy additional attacker infrastructure, including Kali Linux, when required.
+
+> **Current architecture boundary:** The Windows endpoints and FortiGate network are operational components of the lab, while FortiGate-to-Wazuh telemetry integration has not yet been implemented. The project currently demonstrates endpoint/SIEM monitoring and network-security capabilities as complementary layers, with their integration forming a planned next stage.
+
 ---
 
 ## Skills Demonstrated
 
-- Active Directory Administration
-- Windows Server Administration
-- DNS Configuration
+### Infrastructure
+
 - Virtualization
-- Network Configuration
-- Security Monitoring
-- SIEM Deployment
+- Linux administration
+- VMware Workstation
+- KVM/libvirt
+
+### Windows & Identity
+
+- Windows Server administration
+- Active Directory
+- DNS
+- Group Policy
+- Windows endpoint administration
+
+### Security Monitoring
+
 - Windows Event Logging
-- Documentation
-- Git & GitHub
+- Sysmon
+- Wazuh
+- SIEM deployment
+- Endpoint telemetry collection
+- Security event validation
+
+### Network Security
+
+- Network segmentation
+- Routing
+- Firewall configuration
+- DHCP
+- FortiGate administration
+- IPsec VPN
+- IKEv2
+- IPsec over TCP/443
+
+### Security Testing
+
+- Atomic Red Team
+- MITRE ATT&CK
+- Controlled adversary simulation
+- Security telemetry validation
+
+### Engineering & Documentation
+
+- Troubleshooting
+- Evidence-based validation
+- Git
+- GitHub
+- Technical documentation
+- Infrastructure planning
+
+---
 
 ## Disclaimer
 
-This lab is built for educational purposes only. All attacks, detections, and security testing are performed in an isolated virtual environment.
+This lab is built for educational and defensive security research purposes. All testing and adversary simulation are performed within the user's controlled lab environment.
