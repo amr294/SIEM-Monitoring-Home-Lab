@@ -391,7 +391,6 @@ The network edge is operational, but the following items remain open:
 2.  **VM autostart/recovery** --- validate FortiGate recovery after an
     Ubuntu host reboot or power-loss scenario.
 3. **Remote-access VPN documentation** — document the implemented FortiClient/IPsec-over-TCP configuration, troubleshooting process, session behavior, and final hardening separately.
-    FortiClient/IPsec-over-TCP implementation separately.
 4.  **Security hardening** --- replace the temporary/legacy VPN
     cryptographic settings used during interoperability troubleshooting
     with stronger production-appropriate settings.
