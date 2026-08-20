@@ -116,7 +116,7 @@ The Phase 2 configuration uses the `RemoteVPN` Phase 1 interface and the same co
 
 ### Configuration evidence
 
-![FortiGate Phase 1 and Phase 2 configuration](..\images\14-FortiGate-Remote-Access-VPN\03-vpn-evidence.png)
+![FortiGate Phase 1 and Phase 2 configuration](../images/14-FortiGate-Remote-Access-VPN/03-vpn-evidence.png)
 
 > **Security note:** The original CLI output contained the configured PSK material. The public evidence image has that value redacted. Credentials and cryptographic secrets are intentionally not included in this repository.
 
@@ -142,7 +142,7 @@ Default Gateway: 10.10.20.11
 
 ### Client connection evidence
 
-![FortiClient connected with assigned VPN address](..\images\14-FortiGate-Remote-Access-VPN\02-vpn-evidence.png)
+![FortiClient connected with assigned VPN address](../images/14-FortiGate-Remote-Access-VPN/02-vpn-evidence.png)
 
 This establishes that the FortiGate successfully assigned an address from the configured remote-access pool.
 
@@ -166,7 +166,7 @@ This confirms that both the IKE Security Association and IPsec Security Associat
 
 ### IKE gateway diagnostic
 
-![Established IKE and IPsec Security Associations](..\images\14-FortiGate-Remote-Access-VPN\05-vpn-evidence.png)
+![Established IKE and IPsec Security Associations](../images/14-FortiGate-Remote-Access-VPN/05-vpn-evidence.png)
 
 Sensitive peer/session information and cryptographic key material have been redacted from the public evidence.
 
@@ -193,7 +193,7 @@ The diagnostic also contains live packet counters, demonstrating that the tunnel
 
 ### Tunnel diagnostic
 
-![Active RemoteVPN IPsec tunnel](..\images\14-FortiGate-Remote-Access-VPN\06-vpn-evidence.png)
+![Active RemoteVPN IPsec tunnel](../images/14-FortiGate-Remote-Access-VPN/06-vpn-evidence.png)
 
 Cryptographic ESP/AH key material contained in the original diagnostic output has been redacted before publication.
 
@@ -214,7 +214,7 @@ At the same time, the FortiGate management interface is reachable from the VPN-c
 
 ### Connected client and FortiGate management access
 
-![FortiClient connected while accessing the FortiGate GUI](..\images\14-FortiGate-Remote-Access-VPN\04-vpn-evidence.png)
+![FortiClient connected while accessing the FortiGate GUI](../images/14-FortiGate-Remote-Access-VPN/04-vpn-evidence.png)
 
 This provides practical evidence that the VPN is not merely negotiating successfully: traffic is passing through the established tunnel.
 
@@ -228,7 +228,7 @@ This is useful for documenting the transition from the initial configuration sta
 
 ### Baseline evidence
 
-![Initial FortiGate VPN diagnostic state](..\images\14-FortiGate-Remote-Access-VPN\01-vpn-evidence.png)
+![Initial FortiGate VPN diagnostic state](../images/14-FortiGate-Remote-Access-VPN/01-vpn-evidence.png)
 
 ---
 
