@@ -6,7 +6,7 @@ The **SIEM Monitoring Home Lab** is an evolving security environment designed to
 
 The project was initially developed around a VMware Workstation environment containing the Windows infrastructure and Wazuh monitoring components. The environment has since been expanded with a FortiGate-VM deployed using KVM/libvirt to introduce a dedicated network-security layer.
 
-At the current stage of the project, the original Windows/SIEM environment and the new FortiGate network are intentionally maintained as separate environments. The Windows virtual machines have **not yet been migrated behind the FortiGate**.
+At the current stage of the project, the Windows/SIEM environment and the FortiGate network are connected through the VMware virtual networking/NAT layer. DC01 and WIN11-CLIENT remain VMware virtual machines, while their network path reaches the FortiGate-controlled lab LAN through the VMware NAT layer.
 
 This document describes the current architecture and explicitly distinguishes implemented components from planned future integration.
 
@@ -30,7 +30,7 @@ The currently documented Windows infrastructure consists of:
 - **Sysmon** — endpoint telemetry
 - **Wazuh** — SIEM and security monitoring
 
-DC01 and WIN11-CLIENT remain on the VMware NAT environment at this stage.
+DC01 and WIN11-CLIENT remain VMware virtual machines and use the VMware virtual networking/NAT layer as the intermediate network path to the FortiGate-controlled lab LAN.
 
 ### FortiGate Network-Security Environment
 
@@ -44,7 +44,7 @@ The FortiGate provides the newly implemented network-security boundary and curre
 
 The FortiGate WAN is connected to the libvirt `default` network (`192.168.122.0/24`), while the LAN interface is connected to the dedicated lab network.
 
-The existing Windows VMs are **not yet connected to this FortiGate LAN**.
+The existing Windows VMs reach this FortiGate LAN through the VMware virtual networking/NAT layer. They have not been migrated to a different native network adapter or virtual switch directly attached to the FortiGate LAN.
 
 ---
 
@@ -54,33 +54,34 @@ The existing Windows VMs are **not yet connected to this FortiGate LAN**.
 flowchart TB
     LAB[SIEM Monitoring Home Lab]
 
-    LAB --> WINENV[Existing Windows / SIEM Environment]
+    LAB --> WINENV[Windows / SIEM Environment]
     LAB --> FGENV[FortiGate Network-Security Environment]
 
-    WINENV --> VMWARE[VMware Workstation]
-    VMWARE --> DC[DC01\nWindows Server 2022\nActive Directory]
-    VMWARE --> WIN11[WIN11-CLIENT\nWindows 11]
+    WINENV --> VMWARE[VMware Workstation<br/>Virtual Networking / NAT]
+
+    VMWARE --> DC[DC01<br/>Windows Server 2022<br/>Active Directory]
+    VMWARE --> WIN11[WIN11-CLIENT<br/>Windows 11]
+
     DC --> SYS1[Sysmon]
     WIN11 --> SYS2[Sysmon]
-    SYS1 --> WAZUH[Wazuh\nNative on amr-server]
+
+    SYS1 --> WAZUH[Wazuh<br/>Native on amr-server]
     SYS2 --> WAZUH
 
-    FGENV --> UBUNTU[amr-server\nUbuntu Server]
+    FGENV --> UBUNTU[amr-server<br/>Ubuntu Server]
     UBUNTU --> KVM[KVM / libvirt]
     KVM --> FGT[FortiGate-VM]
-    FGT --> WAN[WAN / port1\n192.168.122.78/24]
-    FGT --> LAN[LAN / port2\n10.10.10.1/24\n10.10.10.0/24]
 
-    FUTURE[Future: migrate DC01 and WIN11 behind FortiGate]
-    LAN -.-> FUTURE
-    FUTURE -.-> DC
-    FUTURE -.-> WIN11
+    FGT --> WAN[WAN / port1<br/>192.168.122.78/24]
+    FGT --> LAN[LAN / port2<br/>10.10.10.1/24<br/>10.10.10.0/24]
+
+    VMWARE -->|NAT / virtual networking| LAN
 
     FGT -.-> FWAZUH[Future: FortiGate log integration with Wazuh]
     FWAZUH -.-> WAZUH
 ```
 
-> **Current-state note:** The solid paths represent currently established components or relationships. The dashed paths represent planned work and are **not currently implemented**.
+> **Current-state note:** Solid paths represent currently established components and relationships. Dashed paths represent planned work and are **not currently implemented**.
 
 ---
 
@@ -109,7 +110,7 @@ The historical VMware network configuration and troubleshooting process is docum
 - [02 - VMware Setup](02-VMware-Setup.md)
 - [04 - Network Configuration and Troubleshooting](04-Network-Configuration-and-Troubleshooting.md)
 
-DC01 and WIN11-CLIENT remain on this VMware network at the current stage.
+DC01 and WIN11-CLIENT remain on this VMware virtual networking/NAT environment. This VMware layer provides the intermediate network path between the Windows VMs and the FortiGate-controlled lab LAN.
 
 ---
 
@@ -140,7 +141,7 @@ The FortiGate provides the gateway for the newly implemented lab LAN.
 
 The FortiGate DHCP service provides addresses to clients on this network.
 
-This network is currently a separate environment and does not yet contain the existing DC01 and WIN11-CLIENT virtual machines.
+The existing Windows VMs reach this network through the VMware virtual networking/NAT layer. The VMs themselves remain hosted and networked through VMware rather than being directly attached to the FortiGate LAN interface.
 
 ---
 
@@ -154,13 +155,21 @@ At the current stage:
 DC01 / WIN11-CLIENT
         |
         v
-VMware NAT
+VMware Virtual Networking / NAT
         |
         v
-Upstream connectivity
+FortiGate LAN
+10.10.10.0/24
+        |
+        v
+FortiGate WAN
+192.168.122.78
+        |
+        v
+Upstream Network / Internet
 ```
 
-These systems have **not yet been migrated to the FortiGate LAN**.
+These systems remain VMware virtual machines, with the VMware virtual networking/NAT layer providing the intermediate path to the FortiGate-controlled LAN.
 
 ### FortiGate Environment
 
@@ -216,13 +225,13 @@ Controlled attack simulation has been performed against the Windows environment 
 
 The newly implemented FortiGate introduces:
 
-- Network segmentation
+- Network-edge control
 - Stateful firewalling
 - Routing
 - DHCP
 - Remote-access VPN capability
 
-The FortiGate environment is currently separate from the VMware Windows environment.
+The FortiGate provides the gateway and security boundary for the dedicated `10.10.10.0/24` lab LAN.
 
 ---
 
@@ -255,7 +264,7 @@ The project was subsequently expanded with a FortiGate-VM deployed using KVM/lib
 The objective of this phase was to introduce a dedicated network-security layer including:
 
 - WAN/LAN separation
-- Network segmentation
+- Network-edge control
 - Routing
 - Firewall policies
 - DHCP
@@ -266,29 +275,21 @@ The FortiGate implementation is documented separately from the original Windows/
 
 ---
 
-### Phase 3 — Future Environment Integration
+### Phase 3 — Network and SIEM Integration
 
-The existing VMware Windows environment is planned to be migrated behind the FortiGate.
+The current Windows/SIEM environment already reaches the FortiGate-controlled lab network through the VMware virtual networking/NAT layer.
 
-**This phase has not yet been implemented.**
+The next architectural step is therefore not simply moving the Windows VMs "behind" FortiGate, but expanding the integration between the network-security and SIEM layers.
 
-The future target is:
+Future work includes:
 
-```text
-Internet
-   |
-   v
-FortiGate
-   |
-   v
-10.10.10.0/24
-   |
-   +-- DC01
-   +-- WIN11-CLIENT
-   +-- Future Kali
-```
+- FortiGate security telemetry integration with Wazuh
+- Network and endpoint event correlation
+- Detection engineering
+- Threat hunting
+- Incident investigation workflows
 
-The migration will be documented separately when it is actually performed and validated.
+Additional network restructuring may be performed later if required by the lab's security objectives, but it is not currently represented as an implemented migration.
 
 ---
 
@@ -325,15 +326,12 @@ This would allow network-level security events to be analyzed alongside endpoint
 
 ### Not Yet Integrated
 
-- DC01 behind FortiGate
-- WIN11-CLIENT behind FortiGate
-- VMware environment migrated to the FortiGate LAN
 - FortiGate security logs integrated into Wazuh
+- Network and endpoint telemetry correlated within the SIEM
 
 ### Future
 
 - Kali Linux deployment
-- VMware-to-FortiGate migration
 - FortiGate-to-Wazuh integration
 - Network/endpoint event correlation
 - Detection engineering
@@ -367,7 +365,8 @@ This would allow network-level security events to be analyzed alongside endpoint
 
 ### Network Security
 
-- FortiGate implementation documentation — to be added during the reconstruction phase.
+- [13 - FortiGate Network Edge](13-fortigate-network-edge.md)
+- [14 - FortiGate Remote Access VPN](14-FortiGate-Remote-Access-VPN.md)
 
 ---
 
@@ -375,12 +374,13 @@ This would allow network-level security events to be analyzed alongside endpoint
 
 This document intentionally describes the architecture **as currently implemented**.
 
-The following statements should not be interpreted as current connectivity:
+The following statements define the current boundary:
 
-- DC01 is not currently behind the FortiGate.
-- WIN11-CLIENT is not currently behind the FortiGate.
+- DC01 and WIN11-CLIENT remain VMware virtual machines.
+- VMware virtual networking/NAT provides the intermediate network path between the Windows VMs and the FortiGate-controlled lab LAN.
+- The FortiGate currently provides the gateway and security boundary for the `10.10.10.0/24` lab LAN.
 - Kali Linux is not currently deployed.
-- FortiGate logs are not currently integrated into Wazuh.
-- The FortiGate LAN is not currently the production network for the existing Windows environment.
+- FortiGate security logs are not currently integrated into Wazuh.
+- Network and endpoint telemetry are not yet correlated within Wazuh.
 
-These items represent planned future stages and will only be marked as implemented after deployment and validation evidence has been collected.
+These items represent the current implementation state and planned future work. Additional capabilities will only be marked as implemented after deployment and validation evidence has been collected.
