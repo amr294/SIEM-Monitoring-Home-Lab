@@ -25,34 +25,46 @@ The current lab therefore combines **identity, endpoint, SIEM, adversary simulat
 flowchart TB
     LAB[SIEM Monitoring Home Lab]
 
-    LAB --> EDGE[Network Security Edge]
-    LAB --> SIEM[Windows / SIEM Environment]
+    LAB --> WINENV[Windows / SIEM Environment]
+    LAB --> FGENV[FortiGate Network-Security Environment]
 
-    EDGE --> ROUTER[Home Router / Internet]
-    EDGE --> UBUNTU[amr-server<br/>Ubuntu Server]
-    UBUNTU --> KVM[KVM / libvirt]
-    KVM --> FGT[FortiGate-VM]
+    %% Windows / SIEM environment
+    WINENV --> VMWARE[VMware Workstation<br/>vmnet8 NAT]
 
-    FGT --> WAN[WAN / port1<br/>192.168.122.78/24]
-    FGT --> LAN[LAN / port2<br/>10.10.10.1/24<br/>10.10.10.0/24]
-
-    REMOTE[External Client<br/>FortiClient]
-    REMOTE -->|IKEv2 / IPsec<br/>TCP/443| FGT
-
-    SIEM --> VMWARE[VMware Workstation<br/>NAT / Virtual Network]
-    VMWARE --> DC[DC01<br/>Windows Server 2022<br/>Active Directory / DNS]
+    VMWARE --> DC[DC01<br/>Windows Server 2022<br/>Active Directory]
     VMWARE --> WIN11[WIN11-CLIENT<br/>Windows 11]
-    VMWARE -->|NAT / virtual networking| LAN
 
     DC --> SYS1[Sysmon]
     WIN11 --> SYS2[Sysmon]
+
     SYS1 --> WAZUH[Wazuh<br/>Native on amr-server]
     SYS2 --> WAZUH
 
+    VMWARE --> WINHOST[Physical Windows Host]
+    WINHOST --> AP[L2 / Access Point]
+    AP --> FGLAN[FortiGate LAN<br/>10.10.10.0/24]
+
+    %% FortiGate / KVM / WAN
+    FGENV --> UBUNTU[amr-server<br/>Ubuntu Server]
+    UBUNTU --> KVM[KVM / libvirt]
+    KVM --> FGT[FortiGate-VM]
+
+    FGT --> FGLAN
+    FGT --> WAN[WAN / port1<br/>192.168.122.78]
+
+    WAN --> LIBVIRT[libvirt NAT<br/>192.168.122.0/24]
+    LIBVIRT --> UBUNTU
+
+    UBUNTU --> WIFI[TL-WN722N<br/>192.168.1.13]
+    WIFI --> ROUTER[Home Router<br/>192.168.1.1]
+    ROUTER --> ISP[ISP DSL / Internet]
+
+    %% Remote access VPN
+    REMOTE[External Client<br/>FortiClient]
+    REMOTE -->|IKEv2 / IPsec<br/>TCP/443| FGT
+
+    %% Future SIEM integration
     FGT -.->|Future: FortiGate log integration| WAZUH
-    FUTURE[Future: Network + Endpoint Correlation]
-    FGT -.-> FUTURE
-    WAZUH -.-> FUTURE
 ```
 
 > **Current-state note:** Solid paths represent currently implemented components and relationships. Dashed paths represent planned work and are not currently implemented.

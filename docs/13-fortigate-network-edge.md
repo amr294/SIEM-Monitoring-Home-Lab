@@ -16,7 +16,9 @@ The objective was to move the lab beyond a detection-only design toward a small 
 
 The FortiGate currently provides routing and DHCP for the dedicated `10.10.10.0/24` lab network.
 
-The existing VMware-based Windows infrastructure, including DC01 and the Windows 11 client, remains on its original VMware NAT network at this stage and has intentionally not yet been migrated behind FortiGate. Their integration with the new FortiGate-controlled network will be handled in a later implementation phase.
+The existing VMware-based Windows infrastructure, including DC01 and the Windows 11 client, remains behind the VMware `vmnet8` NAT layer and has not been directly migrated onto the FortiGate `10.10.10.0/24` LAN.
+
+The Windows VMs can reach the FortiGate-controlled network through the physical Windows host and the L2/access-point segment. The VMware guests therefore remain NATed rather than becoming individually addressed FortiGate LAN clients.
 
 ------------------------------------------------------------------------
 
@@ -268,8 +270,7 @@ Home router / Internet
 
 ## 7. Lab Client Connectivity
 
-A Windows client connected through the repurposed Wi-Fi router received
-its network configuration from FortiGate.
+A separate physical Windows test client connected through the repurposed Wi-Fi router received its network configuration from the FortiGate..
 
 The client was assigned:
 
@@ -399,18 +400,20 @@ The network edge is operational, but the following items remain open:
 
 ### Current project boundary
 
-The FortiGate network is currently a separate implementation layer from the original VMware-based Windows infrastructure.
+The FortiGate network is operational as the dedicated network-security layer, while the existing Windows infrastructure remains behind the VMware `vmnet8` NAT layer.
 
 At this stage:
 
-- DC01 remains on the VMware NAT network.
-- The Windows 11 client remains on the VMware NAT network.
+- DC01 remains behind the VMware `vmnet8` NAT layer.
+- The Windows 11 client remains behind the VMware `vmnet8` NAT layer.
+- The Windows VMs are not individually addressed or directly attached to the FortiGate `10.10.10.0/24` LAN.
+- Their network path can traverse the physical Windows host and L2/access-point segment to reach the FortiGate-controlled LAN.
 - Kali Linux has not yet been integrated into the FortiGate network.
-- The dedicated `10.10.10.0/24` network is operational independently.
+- The dedicated `10.10.10.0/24` network is operational.
 - Wazuh remains natively installed on `amr-server`.
 - FortiGate is hosted through KVM/libvirt on the same Ubuntu server.
 
-Migration of the existing VMware endpoints behind FortiGate is intentionally deferred until the FortiGate implementation and documentation have been completed.
+A future phase may migrate the VMware guests to a more direct FortiGate-controlled network attachment, removing the additional VMware NAT layer.
 
 ------------------------------------------------------------------------
 
@@ -427,4 +430,4 @@ This document is intended to serve as:
 - A reconstruction guide for the virtualization and network topology.
 - A baseline for the subsequent SIEM/FortiGate integration work.
 
-The current implementation should therefore be understood as a completed FortiGate network-edge phase, while the migration of the existing VMware infrastructure and the SIEM integration remain subsequent phases.
+The current implementation should therefore be understood as a completed FortiGate network-edge phase, while direct migration of the existing VMware infrastructure to the FortiGate LAN and FortiGate-to-Wazuh SIEM integration remain subsequent phases.

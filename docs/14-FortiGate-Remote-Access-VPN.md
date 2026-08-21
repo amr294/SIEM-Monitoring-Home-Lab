@@ -29,7 +29,7 @@ The relevant network segments are:
 
 The FortiGate WAN interface uses the libvirt NAT network as its upstream connection. The LAN interface connects to the dedicated physical lab subnet.
 
-> **Current project boundary:** The existing VMware-based Windows infrastructure (DC01 and WIN11) has not yet been migrated to the FortiGate-controlled `10.10.10.0/24` network. That integration is planned for a later phase and is intentionally outside the scope of this document.
+> **Current project boundary:** The existing VMware-based Windows infrastructure (DC01 and WIN11) remains behind the VMware `vmnet8` NAT layer and has not been directly migrated onto the FortiGate `10.10.10.0/24` LAN. The VMware guests are not individually addressed on the FortiGate LAN. Their network path can traverse the physical Windows host and L2/access-point segment to reach the FortiGate-controlled network. Direct migration of the VMware guests to the FortiGate LAN is planned for a later phase and is outside the scope of this document.
 
 ---
 
@@ -90,6 +90,7 @@ FortiGate LAN (port2)
 Dedicated Lab LAN
 10.10.10.0/24
 ```
+> **Network-path clarification:** The VPN terminates on the FortiGate. The existing VMware guests remain behind VMware `vmnet8` NAT and are not direct FortiGate LAN clients. This document therefore does not claim that the current VPN provides direct access to DC01 or WIN11 as individually addressed `10.10.10.x` hosts.
 
 The VPN client receives an address from the configured remote-access pool.
 
@@ -116,7 +117,7 @@ The Phase 2 configuration uses the `RemoteVPN` Phase 1 interface and the same co
 
 ### Configuration evidence
 
-![FortiGate Phase 1 and Phase 2 configuration](../images/14-FortiGate-Remote-Access-VPN/03-vpn-evidence.png)
+![FortiGate Phase 1 and Phase 2 configuration](../images/14-FortiGate-Remote-Access-VPN/02-vpn-evidence.png)
 
 > **Security note:** The original CLI output contained the configured PSK material. The public evidence image has that value redacted. Credentials and cryptographic secrets are intentionally not included in this repository.
 
@@ -142,7 +143,7 @@ Default Gateway: 10.10.20.11
 
 ### Client connection evidence
 
-![FortiClient connected with assigned VPN address](../images/14-FortiGate-Remote-Access-VPN/02-vpn-evidence.png)
+![FortiClient connected with assigned VPN address](../images/14-FortiGate-Remote-Access-VPN/03-vpn-evidence.png)
 
 This establishes that the FortiGate successfully assigned an address from the configured remote-access pool.
 
@@ -166,7 +167,7 @@ This confirms that both the IKE Security Association and IPsec Security Associat
 
 ### IKE gateway diagnostic
 
-![Established IKE and IPsec Security Associations](../images/14-FortiGate-Remote-Access-VPN/05-vpn-evidence.png)
+![Established IKE and IPsec Security Associations](../images/14-FortiGate-Remote-Access-VPN/04-vpn-evidence.png)
 
 Sensitive peer/session information and cryptographic key material have been redacted from the public evidence.
 
@@ -193,7 +194,7 @@ The diagnostic also contains live packet counters, demonstrating that the tunnel
 
 ### Tunnel diagnostic
 
-![Active RemoteVPN IPsec tunnel](../images/14-FortiGate-Remote-Access-VPN/06-vpn-evidence.png)
+![Active RemoteVPN IPsec tunnel](../images/14-FortiGate-Remote-Access-VPN/05-vpn-evidence.png)
 
 Cryptographic ESP/AH key material contained in the original diagnostic output has been redacted before publication.
 
@@ -214,7 +215,7 @@ At the same time, the FortiGate management interface is reachable from the VPN-c
 
 ### Connected client and FortiGate management access
 
-![FortiClient connected while accessing the FortiGate GUI](../images/14-FortiGate-Remote-Access-VPN/04-vpn-evidence.png)
+![FortiClient connected while accessing the FortiGate GUI](../images/14-FortiGate-Remote-Access-VPN/01-vpn-evidence.png)
 
 This provides practical evidence that the VPN is not merely negotiating successfully: traffic is passing through the established tunnel.
 
@@ -228,7 +229,7 @@ This is useful for documenting the transition from the initial configuration sta
 
 ### Baseline evidence
 
-![Initial FortiGate VPN diagnostic state](../images/14-FortiGate-Remote-Access-VPN/01-vpn-evidence.png)
+![Initial FortiGate VPN diagnostic state](../images/14-FortiGate-Remote-Access-VPN/06-vpn-evidence.png)
 
 ---
 
@@ -274,13 +275,17 @@ This implementation establishes remote access to the FortiGate/lab network, but 
 
 In particular:
 
-1. The Windows Server (`DC01`) and Windows 11 client remain on their existing VMware Workstation NAT network.
-2. They have not yet been migrated to the FortiGate-controlled `10.10.10.0/24` network.
-3. Kali Linux is not currently part of the deployed lab topology.
-4. The VPN documentation therefore does not claim that the current VPN provides access to those future components.
-5. Integration of the existing VMware infrastructure with the FortiGate network will be documented as a later implementation phase.
+1. The Windows Server (`DC01`) and Windows 11 client remain behind the VMware `vmnet8` NAT layer.
 
-This separation is intentional so that the FortiGate deployment and remote-access implementation can be documented independently before the remaining lab infrastructure is migrated.
+2. They are not individually addressed or directly attached to the FortiGate-controlled `10.10.10.0/24` LAN.
+
+3. Their network path can traverse the physical Windows host and L2/access-point segment to reach the FortiGate-controlled network.
+
+4. Kali Linux is not currently part of the deployed lab topology.
+
+5. Direct migration of the existing VMware infrastructure to the FortiGate LAN, and subsequent validation of VPN access to those hosts, will be documented as a later implementation phase.
+
+This boundary is intentional: the VPN implementation is documented as a completed FortiGate remote-access capability, while direct migration of the VMware infrastructure and validation of VPN access to those hosts remain subsequent implementation phases.
 
 ---
 
