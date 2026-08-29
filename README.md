@@ -15,7 +15,7 @@ The project was built incrementally rather than as a single deployment. The init
 
 The environment has since been expanded with a virtualized FortiGate network-security layer running on an Ubuntu Server host using KVM/libvirt. The FortiGate provides the network edge for the dedicated lab network and has been extended with a remote-access IKEv2/IPsec VPN over TCP/443.
 
-The current lab therefore combines **identity, endpoint, SIEM, adversary simulation, and network-security capabilities**, while additional telemetry integration and security-operations workflows remain planned.
+The current lab therefore combines **identity, endpoint, SIEM, adversary simulation, and network-security capabilities**, with FortiGate telemetry integrated into Wazuh. Further telemetry correlation and security-operations workflows remain planned.
 
 ---
 
@@ -63,13 +63,13 @@ flowchart TB
     REMOTE[External Client<br/>FortiClient]
     REMOTE -->|IKEv2 / IPsec<br/>TCP/443| FGT
 
-    %% Future SIEM integration
-    FGT -.->|Future: FortiGate log integration| WAZUH
+        %% FortiGate → Wazuh Syslog integration
+    FGT -->|Syslog / UDP 514| WAZUH
 ```
 
-> **Current-state note:** Solid paths represent currently implemented components and relationships. Dashed paths represent planned work and are not currently implemented.
+> **Current-state note:** Solid paths represent currently implemented components and relationships. The FortiGate → Wazuh Syslog path is operational and has been validated through network transport, Wazuh ingestion, native FortiGate decoding, and rule processing. Planned work remains focused on broader telemetry correlation and detection engineering.
 
-For the detailed architecture, network boundaries, implementation status, and planned integration, see [Current Lab Architecture](docs/00-Current-Lab-Architecture.md).
+For the detailed architecture, network boundaries, implementation status, and telemetry integration, see [Current Lab Architecture](docs/00-Current-Lab-Architecture.md).
 
 ---
 
@@ -82,7 +82,7 @@ The lab is being developed around several complementary security capabilities:
 - **SIEM Monitoring** — Native Wazuh deployment with endpoint agents and centralized event collection.
 - **Adversary Simulation** — Controlled security testing using Atomic Red Team techniques.
 - **Network Security** — FortiGate virtual firewall providing routing, firewall enforcement, network-edge control, and remote-access VPN capability.
-- **Security Operations** — Planned correlation of endpoint and network telemetry, followed by detection engineering and threat-hunting workflows.
+- **Security Operations** — Centralized endpoint and FortiGate network telemetry through Wazuh, with correlation, detection engineering, and threat-hunting workflows forming the next development stage.
 
 The project intentionally documents both successful implementation and troubleshooting. Configuration decisions, validation evidence, and implementation problems are retained where they provide useful technical context.
 
@@ -120,9 +120,13 @@ A FortiGate virtual firewall was introduced using KVM/libvirt on the Ubuntu host
 
 The FortiGate environment was extended with an IKEv2/IPsec remote-access VPN over TCP/443 and validated using FortiClient and FortiGate-side diagnostics.
 
-### 8. Planned Integration
+### 8. FortiGate → Wazuh Integration
 
-Future work will focus on network telemetry integration, endpoint/network correlation, detection engineering, and additional security-operations workflows.
+FortiGate Syslog forwarding was integrated with the existing Wazuh Manager using UDP/514. The integration was validated at the configuration, network transport, ingestion, decoding, and detection layers using the native FortiGate Wazuh decoders and rules.
+
+### 9. Detection and Security Operations Expansion
+
+The next stage focuses on correlating FortiGate network telemetry with existing Windows endpoint telemetry, expanding detection coverage, developing threat-hunting workflows, and building incident investigation scenarios.
 
 ---
 
@@ -165,6 +169,8 @@ Future work will focus on network telemetry integration, endpoint/network correl
 - DHCP
 - IKEv2 / IPsec Remote-Access VPN
 - IPsec over TCP/443
+- Syslog
+- UDP/514
 
 ### Security Testing
 
@@ -230,10 +236,14 @@ Future work will focus on network telemetry integration, endpoint/network correl
 - [x] FortiClient VPN validation
 - [x] IKE/IPsec Security Association validation
 - [x] Active tunnel and traffic validation
+- [x] Wazuh Syslog receiver configuration
+- [x] FortiGate Syslog forwarding
+- [x] FortiGate → Wazuh UDP/514 transport validation
+- [x] Native FortiGate log decoding
+- [x] FortiGate-specific Wazuh rule validation
 
 ### Planned
 
-- [ ] FortiGate log integration with Wazuh
 - [ ] Network and endpoint telemetry correlation
 - [ ] Detection engineering
 - [ ] Threat hunting workflows
@@ -263,13 +273,13 @@ Future work will focus on network telemetry integration, endpoint/network correl
 
 ## Documentation
 
-The documentation follows the implementation history of the lab. Documents `01–12` cover the original Windows/SIEM build, while `13–14` document the subsequent network-security expansion.
+The documentation follows the implementation history of the lab. Documents `01–12` cover the original Windows/SIEM build, while `13–16` document the subsequent network-security expansion and FortiGate-to-Wazuh telemetry integration.
 
 ### Architecture
 
 | # | Documentation | Description |
 |---|---|---|
-| 00 | [Current Lab Architecture](docs/00-Current-Lab-Architecture.md) | Current-state architecture, network boundaries, implemented components, and planned integration. |
+| 00 | [Current Lab Architecture](docs/00-Current-Lab-Architecture.md) | Current-state architecture, network boundaries, implemented components, and telemetry integration status. |
 
 ### Core Infrastructure
 
@@ -314,19 +324,21 @@ The documentation follows the implementation history of the lab. Documents `01�
 |---|---|---|
 | 13 | [FortiGate Network Edge](docs/13-fortigate-network-edge.md) | Deploy the FortiGate VM, configure the WAN/LAN edge, routing, DHCP, and dedicated lab network. |
 | 14 | [FortiGate Remote Access VPN](docs/14-FortiGate-Remote-Access-VPN.md) | Implement and validate IKEv2/IPsec remote access over TCP/443 using FortiClient. |
+| 15 | [Wazuh Dashboard Port Migration](docs/15-Wazuh-Dashboard-Port-Migration.md) | Migrate the Wazuh Dashboard HTTPS listener from TCP/443 to TCP/8443 to resolve the port conflict introduced by the FortiGate VPN forwarding path. |
+| 16 | [FortiGate → Wazuh Integration](docs/16-FortiGate-Wazuh-Integration.md) | Integrate FortiGate Syslog with Wazuh over UDP/514 and validate transport, ingestion, native decoding, and FortiGate-specific rule processing. |
 
 ---
 
 ## Current State & Roadmap
 
-The core Windows/SIEM environment and FortiGate network-security layer are operational. Remote-access VPN functionality has also been implemented and validated.
+The core Windows/SIEM environment and FortiGate network-security layer are operational. Remote-access VPN functionality has been implemented and validated, and the FortiGate has been integrated with Wazuh using Syslog over UDP/514.
 
-The next stages focus on connecting the network-security layer with the existing SIEM environment and expanding the lab toward security-operations workflows.
+The next stages focus on correlating FortiGate network telemetry with endpoint telemetry and expanding the lab toward detection engineering, threat hunting, and security-operations workflows.
 
 ### Next Engineering Objectives
 
-- [ ] Integrate FortiGate security telemetry with Wazuh.
-- [ ] Validate FortiGate log ingestion and parsing.
+- [x] Integrate FortiGate security telemetry with Wazuh.
+- [x] Validate FortiGate log ingestion and parsing.
 - [ ] Correlate network and endpoint telemetry.
 - [ ] Develop custom detection logic and rules.
 - [ ] Build investigation and threat-hunting scenarios.
@@ -334,7 +346,7 @@ The next stages focus on connecting the network-security layer with the existing
 - [ ] Expand adversary simulation scenarios.
 - [ ] Deploy additional attacker infrastructure, including Kali Linux, when required.
 
-> **Current architecture boundary:** The Windows endpoints and FortiGate network are operational components of the lab, while FortiGate-to-Wazuh telemetry integration has not yet been implemented. The project currently demonstrates endpoint/SIEM monitoring and network-security capabilities as complementary layers, with their integration forming a planned next stage.
+> **Current architecture boundary:** The Windows endpoints, Wazuh SIEM, and FortiGate network-security layer are operational components of the lab. FortiGate security telemetry is now forwarded to Wazuh over Syslog/UDP 514 and has been validated through transport, ingestion, native decoding, and rule processing. The next development stage is focused on correlating network and endpoint telemetry and building broader detection and investigation workflows.
 
 ---
 
@@ -363,6 +375,9 @@ The next stages focus on connecting the network-security layer with the existing
 - SIEM deployment
 - Endpoint telemetry collection
 - Security event validation
+- Syslog ingestion
+- Log parsing and decoding
+- FortiGate SIEM integration
 
 ### Network Security
 
@@ -374,6 +389,7 @@ The next stages focus on connecting the network-security layer with the existing
 - IPsec VPN
 - IKEv2
 - IPsec over TCP/443
+- Network telemetry forwarding
 
 ### Security Testing
 

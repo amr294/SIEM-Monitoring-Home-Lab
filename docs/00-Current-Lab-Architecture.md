@@ -55,7 +55,7 @@ ISP DSL
 
 The Windows VMs are therefore part of the FortiGate network path, but they are **not individually addressed or directly attached to the FortiGate `10.10.10.0/24` LAN**.
 
-This document describes the current architecture and explicitly distinguishes implemented components from planned future integration.
+This document describes the current architecture and explicitly distinguishes implemented components and integrations from planned future work.
 
 ---
 
@@ -151,11 +151,11 @@ flowchart TB
     REMOTE[External Client<br/>FortiClient]
     REMOTE -->|IKEv2 / IPsec<br/>TCP/443| FGT
 
-    %% Future SIEM integration
-    FGT -.->|Future: FortiGate log integration| WAZUH
+    %% FortiGate → Wazuh Syslog integration
+    FGT -->|Syslog / UDP 514| WAZUH
 ```
 
-> **Current-state note:** Solid paths represent currently established components and relationships. Dashed paths represent planned work and are **not currently implemented**.
+> **Current-state note:** Solid paths represent currently established components and relationships. The FortiGate → Wazuh Syslog path is operational and has been validated through network transport, Wazuh ingestion, native FortiGate decoding, and rule processing.
 
 > **Network-path clarification:** DC01 and WIN11-CLIENT are VMware NAT guests. They are not directly attached to or individually addressed on the FortiGate `10.10.10.0/24` LAN. Their traffic reaches the FortiGate-controlled network through the VMware `vmnet8` NAT layer, the physical Windows host, and the L2/access-point segment.
 
@@ -468,33 +468,20 @@ The FortiGate implementation is documented separately from the original Windows/
 
 ### Phase 3 — Network and SIEM Integration
 
-The current Windows/SIEM environment already reaches the FortiGate-controlled lab network through the VMware virtual networking/NAT layer.
+The FortiGate network-security layer has now been integrated with the existing Wazuh SIEM using Syslog over UDP/514.
 
-The next architectural step is therefore not simply moving the Windows VMs "behind" FortiGate, but expanding the integration between the network-security and SIEM layers.
+FortiGate Syslog traffic is received by Wazuh on `amr-server` and has been validated through network transport, log ingestion, native FortiGate decoding, and FortiGate-specific rule processing.
+
+The next architectural step is to expand this integration into broader network and endpoint telemetry correlation.
 
 Future work includes:
 
-- FortiGate security telemetry integration with Wazuh
-
 - Network and endpoint event correlation
-
 - Detection engineering
-
 - Threat hunting
-
 - Incident investigation workflows
 
 Additional network restructuring may be performed later if required by the lab's security objectives, but it is not currently represented as an implemented migration.
-
----
-
-### Phase 4 — Future Network Telemetry Integration
-
-A future objective is to integrate FortiGate security telemetry with Wazuh.
-
-This would allow network-level security events to be analyzed alongside endpoint telemetry.
-
-**This integration has not yet been implemented and is therefore not represented as a current capability.**
 
 ---
 
@@ -534,24 +521,23 @@ This would allow network-level security events to be analyzed alongside endpoint
 
 - FortiGate remote-access VPN
 
-### Not Yet Integrated
+### Integrated
 
 - FortiGate security logs integrated into Wazuh
+- FortiGate Syslog forwarding over UDP/514
+- FortiGate log ingestion and parsing
+- Native FortiGate decoder and rule processing
+
+### Not Yet Integrated
 
 - Network and endpoint telemetry correlated within the SIEM
 
 ### Future
 
 - Kali Linux deployment
-
-- FortiGate-to-Wazuh integration
-
 - Network/endpoint event correlation
-
 - Detection engineering
-
 - Threat hunting
-
 - Incident investigation scenarios
 
 ---
@@ -594,6 +580,10 @@ This would allow network-level security events to be analyzed alongside endpoint
 
 - [14 - FortiGate Remote Access VPN](14-FortiGate-Remote-Access-VPN.md)
 
+- [15 - Wazuh Dashboard Port Migration](15-Wazuh-Dashboard-Port-Migration.md)
+
+- [16 - FortiGate → Wazuh Integration](16-FortiGate-Wazuh-Integration.md)
+
 ---
 
 ## 11. Current-State Boundary
@@ -620,7 +610,9 @@ The following statements define the current implementation boundary:
 
 - Kali Linux is not currently deployed.
 
-- FortiGate security logs are not currently integrated into Wazuh.
+- FortiGate security logs are integrated into Wazuh through Syslog over UDP/514.
+
+- FortiGate log ingestion, native decoding, and rule processing have been validated.
 
 - Network and endpoint telemetry are not yet correlated within Wazuh.
 
