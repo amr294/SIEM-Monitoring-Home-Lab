@@ -82,7 +82,7 @@ The lab is being developed around several complementary security capabilities:
 - **SIEM Monitoring** — Native Wazuh deployment with endpoint agents and centralized event collection.
 - **Adversary Simulation** — Controlled security testing using Atomic Red Team techniques.
 - **Network Security** — FortiGate virtual firewall providing routing, firewall enforcement, network-edge control, and remote-access VPN capability.
-- **Security Operations** — Centralized endpoint and FortiGate network telemetry through Wazuh, with correlation, detection engineering, and threat-hunting workflows forming the next development stage.
+- **Security Operations** — Centralized endpoint and FortiGate network telemetry through Wazuh, with a dedicated SOC monitoring dashboard providing visibility across alerts, agents, telemetry sources, Windows authentication activity, and FortiGate traffic. Correlation, detection engineering, and threat-hunting workflows remain the next development stage.
 
 The project intentionally documents both successful implementation and troubleshooting. Configuration decisions, validation evidence, and implementation problems are retained where they provide useful technical context.
 
@@ -124,7 +124,13 @@ The FortiGate environment was extended with an IKEv2/IPsec remote-access VPN ove
 
 FortiGate Syslog forwarding was integrated with the existing Wazuh Manager using UDP/514. The integration was validated at the configuration, network transport, ingestion, decoding, and detection layers using the native FortiGate Wazuh decoders and rules.
 
-### 9. Detection and Security Operations Expansion
+### 9. SOC Monitoring Dashboard
+
+A dedicated Wazuh Dashboard was developed to provide a consolidated security-operations view of the lab. The dashboard visualizes alert volume over time, alert distribution by agent and severity, telemetry sources, Windows authentication activity, failed authentication sources, and FortiGate traffic activity.
+
+The dashboard is intended as an operational monitoring layer rather than a replacement for investigation. Detailed event analysis remains available through Wazuh Discover, where the underlying Windows and FortiGate events can be filtered and investigated.
+
+### 10. Detection and Security Operations Expansion
 
 The next stage focuses on correlating FortiGate network telemetry with existing Windows endpoint telemetry, expanding detection coverage, developing threat-hunting workflows, and building incident investigation scenarios.
 
@@ -242,6 +248,19 @@ The next stage focuses on correlating FortiGate network telemetry with existing 
 - [x] Native FortiGate log decoding
 - [x] FortiGate-specific Wazuh rule validation
 
+### SOC Monitoring
+
+- [x] Wazuh SOC monitoring dashboard
+- [x] Alert volume visualization
+- [x] Alert distribution by agent
+- [x] Alert distribution by severity
+- [x] Telemetry source visualization
+- [x] Windows authentication monitoring
+- [x] Failed authentication source monitoring
+- [x] FortiGate traffic monitoring
+- [x] FortiGate traffic source visualization
+- [x] FortiGate action monitoring
+
 ### Planned
 
 - [ ] Network and endpoint telemetry correlation
@@ -267,13 +286,14 @@ The next stage focuses on correlating FortiGate network telemetry with existing 
 | KVM / libvirt | FortiGate virtualization and WAN-side NAT networking | `amr-server` | Active |
 | FortiClient | Remote-access VPN client | External client | Used for VPN validation |
 | Atomic Red Team | Controlled adversary simulation | Windows lab | Used for security validation |
+| SOC Monitoring Dashboard | Consolidated security monitoring and visualization | Wazuh Dashboard | Active |
 | Kali Linux | Planned attacker platform | Not currently deployed | Planned |
 
 ---
 
 ## Documentation
 
-The documentation follows the implementation history of the lab. Documents `01–12` cover the original Windows/SIEM build, while `13–16` document the subsequent network-security expansion and FortiGate-to-Wazuh telemetry integration.
+The documentation follows the implementation history of the lab. Documents `01–12` cover the original Windows/SIEM build, while `13–16` document the subsequent network-security expansion and FortiGate-to-Wazuh telemetry integration. Document `17` covers the development of the SOC monitoring dashboard and the transition toward operational security monitoring.
 
 ### Architecture
 
@@ -327,13 +347,19 @@ The documentation follows the implementation history of the lab. Documents `01�
 | 15 | [Wazuh Dashboard Port Migration](docs/15-Wazuh-Dashboard-Port-Migration.md) | Migrate the Wazuh Dashboard HTTPS listener from TCP/443 to TCP/8443 to resolve the port conflict introduced by the FortiGate VPN forwarding path. |
 | 16 | [FortiGate → Wazuh Integration](docs/16-FortiGate-Wazuh-Integration.md) | Integrate FortiGate Syslog with Wazuh over UDP/514 and validate transport, ingestion, native decoding, and FortiGate-specific rule processing. |
 
+### Security Operations
+
+| # | Documentation | Description |
+|---|---|---|
+| 17 | [SOC Monitoring Dashboard](docs/17-SOC-Monitoring-Dashboard.md) | Build and validate a consolidated Wazuh monitoring dashboard for alert trends, agents, severity, telemetry sources, Windows authentication, and FortiGate traffic visibility. |
+
 ---
 
 ## Current State & Roadmap
 
-The core Windows/SIEM environment and FortiGate network-security layer are operational. Remote-access VPN functionality has been implemented and validated, and the FortiGate has been integrated with Wazuh using Syslog over UDP/514.
+The core Windows/SIEM environment and FortiGate network-security layer are operational. Remote-access VPN functionality has been implemented and validated, the FortiGate has been integrated with Wazuh using Syslog over UDP/514, and a dedicated SOC monitoring dashboard has been built to provide consolidated visibility across the collected telemetry.
 
-The next stages focus on correlating FortiGate network telemetry with endpoint telemetry and expanding the lab toward detection engineering, threat hunting, and security-operations workflows.
+The next stages focus on correlating FortiGate network telemetry with endpoint telemetry and expanding the lab toward detection engineering, threat hunting, and security-operations investigation workflows.
 
 ### Next Engineering Objectives
 
@@ -378,6 +404,8 @@ The next stages focus on correlating FortiGate network telemetry with endpoint t
 - Syslog ingestion
 - Log parsing and decoding
 - FortiGate SIEM integration
+- Wazuh dashboard development
+- Security monitoring visualization
 
 ### Network Security
 
