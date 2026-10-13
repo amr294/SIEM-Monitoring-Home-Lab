@@ -4,7 +4,7 @@
 
 The **SIEM Monitoring Home Lab** is an evolving security environment designed to combine enterprise Windows infrastructure, endpoint telemetry, SIEM monitoring, controlled attack simulation, and network security technologies.
 
-The project was initially developed around a VMware Workstation environment containing the Windows infrastructure and Wazuh monitoring components. The environment has since been expanded with a FortiGate-VM deployed using KVM/libvirt to introduce a dedicated network-security layer.
+The project was initially developed around a VMware Workstation environment containing the Windows infrastructure and Wazuh monitoring components. The environment has since been expanded with a FortiGate-VM deployed using KVM/libvirt to introduce a dedicated network-security layer, and with a custom SOAR Console that turns Wazuh alerts into an analyst workflow.
 
 At the current stage of the project, the Windows/SIEM environment can reach the FortiGate-controlled lab network through the VMware virtual networking/NAT layer and the physical network path.
 
@@ -61,11 +61,13 @@ This document describes the current architecture and explicitly distinguishes im
 
 ## 2. Current Architecture
 
-The current environment consists of two major implementation areas:
+The current environment consists of three major implementation areas:
 
 1. The existing VMware-based Windows/SIEM environment.
 
-2. The newly implemented FortiGate network-security environment hosted on `amr-server`.
+2. The FortiGate network-security environment hosted on `amr-server`.
+
+3. The SOAR Console, an analyst workflow layer built on top of the Wazuh alert stream.
 
 ### Existing Windows/SIEM Environment
 
@@ -105,6 +107,24 @@ The existing Windows VMs reach this FortiGate LAN indirectly through the VMware 
 
 The Windows VMs have not been migrated to a native network adapter or virtual switch that directly attaches them to the FortiGate LAN.
 
+### SOAR Console (Analyst Workflow Layer)
+
+A custom Python SOAR Console has been built above the SIEM layer. It does not replace Wazuh: Wazuh remains responsible for event collection, rule evaluation, and alert generation, while the console manages what the analyst does after an alert exists.
+
+The console:
+
+- Reads the Wazuh alert stream from `amr-server` over read-only SSH.
+
+- Normalizes, deduplicates, and stores alerts in a local SQLite database.
+
+- Supports assignment, investigation, closure with a required disposition, and escalation with a mandatory report.
+
+- Extracts public IP addresses and file hashes as IOCs and enriches them with VirusTotal **only when the analyst requests it**.
+
+- Records analyst and system actions in an audit log.
+
+The implementation, workflow, validation evidence, and limitations are documented in [18 - SOAR Console and Incident Response Workflow](18-SOAR-Console-and-Incident-Response.md).
+
 ---
 
 ## 3. Architecture Diagram
@@ -115,6 +135,7 @@ flowchart TB
 
     LAB --> WINENV[Windows / SIEM Environment]
     LAB --> FGENV[FortiGate Network-Security Environment]
+    LAB --> SOCENV[Security Operations Layer]
 
     %% Windows / SIEM environment
     WINENV --> VMWARE[VMware Workstation<br/>vmnet8 NAT]
@@ -153,9 +174,14 @@ flowchart TB
 
     %% FortiGate → Wazuh Syslog integration
     FGT -->|Syslog / UDP 514| WAZUH
+
+    %% SOAR Console
+    SOCENV --> SOAR[SOAR Console<br/>Python / SQLite]
+    WAZUH -->|alerts.json<br/>read-only SSH| SOAR
+    SOAR -->|analyst-requested<br/>IOC lookups| VT[VirusTotal API<br/>external service]
 ```
 
-> **Current-state note:** Solid paths represent currently established components and relationships. The FortiGate → Wazuh Syslog path is operational and has been validated through network transport, Wazuh ingestion, native FortiGate decoding, and rule processing.
+> **Current-state note:** Solid paths represent currently established components and relationships. The FortiGate → Wazuh Syslog path is operational and has been validated through network transport, Wazuh ingestion, native FortiGate decoding, and rule processing. The SOAR Console reads Wazuh alerts over read-only SSH and contacts VirusTotal only when an analyst requests enrichment.
 
 > **Network-path clarification:** DC01 and WIN11-CLIENT are VMware NAT guests. They are not directly attached to or individually addressed on the FortiGate `10.10.10.0/24` LAN. Their traffic reaches the FortiGate-controlled network through the VMware `vmnet8` NAT layer, the physical Windows host, and the L2/access-point segment.
 
@@ -171,6 +197,9 @@ flowchart TB
 | DC01 | VMware Workstation | Active Directory Domain Controller | Active; behind VMware `vmnet8` NAT |
 | WIN11-CLIENT | VMware Workstation | Domain workstation / endpoint telemetry source | Active; behind VMware `vmnet8` NAT |
 | Sysmon | Windows endpoints | Endpoint telemetry | Active |
+| SOC Monitoring Dashboard | Wazuh Dashboard | Consolidated monitoring and visualization of alerts, agents, authentication, and FortiGate traffic | Active |
+| SOAR Console | Python / SQLite (analyst workstation) | Alert queue, investigation workflow, IOC enrichment, escalation, and audit logging | Active; consumes Wazuh alerts over read-only SSH |
+| VirusTotal API | External service | IOC reputation lookups requested by the analyst | Used for enrichment; public IPs and file hashes only |
 | Kali Linux | — | Future attack simulation platform | Not currently deployed |
 
 ---
@@ -372,6 +401,33 @@ The VPN implementation and validation are documented separately in:
 
 - [14 - FortiGate Remote Access VPN](14-FortiGate-Remote-Access-VPN.md)
 
+### SOAR Console Data Path
+
+The SOAR Console is not part of the FortiGate LAN path. It reaches the Wazuh host over the home network and retrieves alerts through a read-only SSH session:
+
+```text
+Wazuh Manager
+amr-server (192.168.1.13)
+        |
+        |  /var/ossec/logs/alerts/alerts.json
+        |  read-only SSH, dedicated non-administrative account
+        v
+SOAR Console
+(Python / SQLite)
+        |
+        |  HTTPS, only when the analyst requests enrichment
+        |  public IP addresses and file hashes only
+        v
+VirusTotal API
+(external service)
+```
+
+Private and non-routable addresses are never submitted to VirusTotal; they are resolved locally as internal. The VirusTotal API key is kept out of the database, logs, and source control.
+
+The SOAR implementation and its security considerations are documented in:
+
+- [18 - SOAR Console and Incident Response Workflow](18-SOAR-Console-and-Incident-Response.md)
+
 ---
 
 ## 7. Security Architecture
@@ -389,6 +445,8 @@ The Windows endpoints use native Windows security auditing together with Sysmon 
 ### SIEM
 
 Wazuh provides centralized security event collection, analysis, and visualization. Wazuh is installed natively on `amr-server`.
+
+A dedicated SOC monitoring dashboard consolidates alert volume, agent and severity distribution, telemetry sources, Windows authentication activity, and FortiGate traffic into a single operational view.
 
 ### Adversary Simulation
 
@@ -409,6 +467,12 @@ The newly implemented FortiGate introduces:
 - Remote-access VPN capability
 
 The FortiGate provides the gateway and security boundary for the dedicated `10.10.10.0/24` lab LAN.
+
+### Security Operations Workflow
+
+The SOAR Console adds the analyst workflow above the SIEM: ownership, investigation, threat-intelligence enrichment, closure or escalation, and an audit trail.
+
+It is a human-in-the-loop design. The console does not classify, escalate, or act on alerts automatically, and enrichment is only performed when the analyst requests it.
 
 ---
 
@@ -472,14 +536,35 @@ The FortiGate network-security layer has now been integrated with the existing W
 
 FortiGate Syslog traffic is received by Wazuh on `amr-server` and has been validated through network transport, log ingestion, native FortiGate decoding, and FortiGate-specific rule processing.
 
-The next architectural step is to expand this integration into broader network and endpoint telemetry correlation.
+---
+
+### Phase 4 — SOC Monitoring Dashboard
+
+A dedicated Wazuh dashboard was developed to provide a consolidated operational view of the collected telemetry, including alert trends, agent and severity distribution, telemetry sources, Windows authentication activity, and FortiGate traffic.
+
+See documentation `17`.
+
+---
+
+### Phase 5 — SOAR Console
+
+A custom SOAR Console was built above the SIEM to manage the analyst workflow after Wazuh raises an alert: ingestion, prioritization, assignment, investigation, human-triggered VirusTotal enrichment, closure or escalation, and audit logging.
+
+See documentation `18`.
+
+---
+
+### Planned Next Phase
+
+The next architectural step is to expand the integrations into broader network and endpoint telemetry correlation.
 
 Future work includes:
 
 - Network and endpoint event correlation
 - Detection engineering
 - Threat hunting
-- Incident investigation workflows
+- Incident investigation scenarios
+- Controlled response actions through the SOAR workflow
 
 Additional network restructuring may be performed later if required by the lab's security objectives, but it is not currently represented as an implemented migration.
 
@@ -521,16 +606,23 @@ Additional network restructuring may be performed later if required by the lab's
 
 - FortiGate remote-access VPN
 
+- SOC monitoring dashboard
+
+- SOAR Console (alert ingestion, investigation workflow, closure, escalation, and audit logging)
+
 ### Integrated
 
 - FortiGate security logs integrated into Wazuh
 - FortiGate Syslog forwarding over UDP/514
 - FortiGate log ingestion and parsing
 - Native FortiGate decoder and rule processing
+- Wazuh alerts consumed by the SOAR Console over read-only SSH
+- VirusTotal IOC enrichment, requested by the analyst through the SOAR Console
 
 ### Not Yet Integrated
 
 - Network and endpoint telemetry correlated within the SIEM
+- Automated or analyst-approved response actions from the SOAR Console to the FortiGate or endpoints
 
 ### Future
 
@@ -539,6 +631,9 @@ Additional network restructuring may be performed later if required by the lab's
 - Detection engineering
 - Threat hunting
 - Incident investigation scenarios
+- SOAR enrichment expansion (domains and URLs, additional intelligence sources, cache refresh)
+- SOAR analyst login and session switching
+- Controlled response actions
 
 ---
 
@@ -584,6 +679,12 @@ Additional network restructuring may be performed later if required by the lab's
 
 - [16 - FortiGate → Wazuh Integration](16-FortiGate-Wazuh-Integration.md)
 
+### Security Operations
+
+- [17 - SOC Monitoring Dashboard](17-SOC-Monitoring-Dashboard.md)
+
+- [18 - SOAR Console and Incident Response Workflow](18-SOAR-Console-and-Incident-Response.md)
+
 ---
 
 ## 11. Current-State Boundary
@@ -615,5 +716,15 @@ The following statements define the current implementation boundary:
 - FortiGate log ingestion, native decoding, and rule processing have been validated.
 
 - Network and endpoint telemetry are not yet correlated within Wazuh.
+
+- The SOAR Console consumes Wazuh alerts over read-only SSH and records analyst decisions. It does not perform automated response actions against the FortiGate or any endpoint.
+
+- VirusTotal enrichment is performed only when an analyst requests it, and only public IP addresses and file hashes are submitted. Private addresses are never sent.
+
+- The SOAR Console is operated as a single local analyst session. Login and analyst switching are not implemented.
+
+- The alerts used as SOAR validation evidence were raised on `amr-server`, including controlled test events. Windows endpoint and FortiGate alerts use the same Wazuh alert stream but were not part of that evidence session.
+
+- The SOAR Console source code is not currently published.
 
 These items represent the current implementation state and planned future work. Additional capabilities will only be marked as implemented after deployment and validation evidence has been collected.
