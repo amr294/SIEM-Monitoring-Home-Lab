@@ -145,7 +145,9 @@ The dashboard is intended as an operational monitoring layer rather than a repla
 
 A custom Python SOAR Console was built above the SIEM to manage what happens after Wazuh raises an alert. It ingests alerts from `amr-server` over read-only SSH, stores them in SQLite, and supports the full analyst workflow: queue prioritization, ownership, investigation notes and evidence, IOC extraction, VirusTotal enrichment requested explicitly by the analyst, closure with a required disposition, and escalation with a mandatory investigation report. All significant actions are recorded in an audit log.
 
-The console is a human-in-the-loop workflow rather than an autonomous response engine: no alert is classified, escalated, or acted on automatically, and no response actions are performed against the FortiGate or endpoints.
+The console is a human-in-the-loop workflow rather than an autonomous response engine: no alert is classified, escalated, or acted on automatically, and no response actions are performed against the FortiGate or endpoints. It extends Wazuh operationally and does not replace it: Wazuh still handles event collection, rule evaluation, and alert generation.
+
+The console's implementation is published separately in the [SOC-SOAR-Console](https://github.com/amr294/SOC-SOAR-Console) repository, which contains the Python source code and standalone tests. This repository remains the comprehensive lab documentation: [Document 18](docs/18-SOAR-Console-and-Incident-Response.md) explains the console's architecture, workflow, validation evidence, and limitations in the context of the full lab.
 
 ### 11. Detection and Security Operations Expansion
 
@@ -331,7 +333,7 @@ The next stage focuses on correlating FortiGate network telemetry with existing 
 | FortiClient | Remote-access VPN client | External client | Used for VPN validation |
 | Atomic Red Team | Controlled adversary simulation | Windows lab | Used for security validation |
 | SOC Monitoring Dashboard | Consolidated security monitoring and visualization | Wazuh Dashboard | Active |
-| SOAR Console | Analyst workflow: alert queue, investigation, IOC enrichment, closure, escalation, and audit | Python / SQLite on the analyst workstation | Active; source code not currently published |
+| SOAR Console | Analyst workflow: alert queue, investigation, IOC enrichment, closure, escalation, and audit | Python / SQLite on the analyst workstation | Active; source in the separate [SOC-SOAR-Console](https://github.com/amr294/SOC-SOAR-Console) repository |
 | VirusTotal API | External IOC reputation lookups requested by the analyst | External service | Used for enrichment validation |
 | Kali Linux | Planned attacker platform | Not currently deployed | Planned |
 
@@ -400,7 +402,7 @@ The documentation follows the implementation history of the lab. Documents `01â€
 | 17 | [SOC Monitoring Dashboard](docs/17-SOC-Monitoring-Dashboard.md) | Build and validate a consolidated Wazuh monitoring dashboard for alert trends, agents, severity, telemetry sources, Windows authentication, and FortiGate traffic visibility. |
 | 18 | [SOAR Console and Incident Response Workflow](docs/18-SOAR-Console-and-Incident-Response.md) | Custom Python SOAR console that ingests Wazuh alerts and supports analyst assignment, investigation, VirusTotal IOC enrichment, closure with disposition, escalation reporting, and audit logging. |
 
-> The SOAR Console source code is not currently published. Document 18 describes its architecture, workflow, validation evidence, and limitations, and the implementation can be demonstrated on request.
+> **SOAR Console source code:** The implementation and its standalone tests are in the separate public repository [SOC-SOAR-Console](https://github.com/amr294/SOC-SOAR-Console). Document 18 describes the console's architecture, workflow, validation evidence, and limitations within this lab. The source is publicly viewable, but that repository includes no license granting general reuse rights.
 
 ---
 
