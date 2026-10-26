@@ -125,6 +125,8 @@ The console:
 
 The implementation, workflow, validation evidence, and limitations are documented in [18 - SOAR Console and Incident Response Workflow](18-SOAR-Console-and-Incident-Response.md).
 
+The console's source code and standalone tests are published in the separate [SOC-SOAR-Console](https://github.com/amr294/SOC-SOAR-Console) repository. This repository documents the console's role in the lab; the source repository contains the implementation.
+
 ---
 
 ## 3. Architecture Diagram
@@ -403,8 +405,6 @@ The VPN implementation and validation are documented separately in:
 
 ### SOAR Console Data Path
 
-The SOAR Console is not part of the FortiGate LAN path. It reaches the Wazuh host over the home network and retrieves alerts through a read-only SSH session:
-
 ```text
 Wazuh Manager
 amr-server (192.168.1.13)
@@ -412,15 +412,25 @@ amr-server (192.168.1.13)
         |  /var/ossec/logs/alerts/alerts.json
         |  read-only SSH, dedicated non-administrative account
         v
-SOAR Console
-(Python / SQLite)
+Wazuh reader and ingestor
+(normalization, deduplication, IOC extraction)
         |
-        |  HTTPS, only when the analyst requests enrichment
-        |  public IP addresses and file hashes only
         v
-VirusTotal API
-(external service)
+Local SQLite database
+        |
+        v
+SOAR service and GUI  - - - - - - - ->  VirusTotal API
+        |                               (external service; reached through
+        |                               the background enrichment worker
+        v                               only when the analyst requests
+Analyst investigation and decisions     enrichment; public IP addresses
+(closure with disposition, or           and file hashes only)
+escalation with report)
 ```
+
+VirusTotal enrichment is initiated by the analyst. Extracting an IOC from an alert does not trigger a lookup: the analyst's request is stored in the database and then fulfilled by the background enrichment worker.
+
+The SOAR Console does not connect to the FortiGate or to the Windows endpoints and performs no automated response against them.
 
 Private and non-routable addresses are never submitted to VirusTotal; they are resolved locally as internal. The VirusTotal API key is kept out of the database, logs, and source control.
 
@@ -685,6 +695,10 @@ Additional network restructuring may be performed later if required by the lab's
 
 - [18 - SOAR Console and Incident Response Workflow](18-SOAR-Console-and-Incident-Response.md)
 
+### Source Code Repository
+
+- [SOC-SOAR-Console](https://github.com/amr294/SOC-SOAR-Console) - public source code and standalone tests for the SOAR Console (separate repository)
+
 ---
 
 ## 11. Current-State Boundary
@@ -725,6 +739,6 @@ The following statements define the current implementation boundary:
 
 - The alerts used as SOAR validation evidence were raised on `amr-server`, including controlled test events. Windows endpoint and FortiGate alerts use the same Wazuh alert stream but were not part of that evidence session.
 
-- The SOAR Console source code is not currently published.
+- The SOAR Console source code and standalone tests are published in the separate [SOC-SOAR-Console](https://github.com/amr294/SOC-SOAR-Console) repository. That repository includes no license granting general reuse rights.
 
 These items represent the current implementation state and planned future work. Additional capabilities will only be marked as implemented after deployment and validation evidence has been collected.
