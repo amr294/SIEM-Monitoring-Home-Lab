@@ -405,6 +405,8 @@ The VPN implementation and validation are documented separately in:
 
 ### SOAR Console Data Path
 
+The SOAR Console is not part of the FortiGate LAN path. It reaches the Wazuh host over the home network and retrieves alerts through a read-only SSH session:
+
 ```text
 Wazuh Manager
 amr-server (192.168.1.13)
