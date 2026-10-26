@@ -878,18 +878,19 @@ The project has moved from a security-monitoring laboratory toward a more comple
 
 ## 25. Implementation Access
 
-The SOAR Console source code is not currently published in this repository, and it may be released in the future.
+The SOAR Console implementation is published in a separate public repository: [SOC-SOAR-Console](https://github.com/amr294/SOC-SOAR-Console). It contains the Python application, database schema and persistence layer, Wazuh reader and ingestor, IOC extraction, VirusTotal client, asynchronous enrichment worker, service layer, GUI, and the standalone test scripts referred to in Section 19 (`test_wazuh_ingest.py`, `test_soar_service.py`, and `test_enrichment.py`), together with setup and run instructions.
 
-This repository provides:
+This document provides the integrated lab context:
 
-- Architecture documentation.
-- Implementation description.
+- Architecture and integration boundaries.
 - Workflow documentation.
-- Validation evidence.
-- Operational screenshots.
-- Integration boundaries and limitations.
+- Operational screenshots and validation evidence.
+- Validation methods.
+- Security considerations and limitations.
 
-The implementation can be demonstrated or reviewed on request by technical reviewers and recruiters.
+The two repositories have separate purposes. This repository is the comprehensive lab documentation, and no source files are duplicated here. The source repository holds the implementation.
+
+The source code is publicly viewable, but public availability is not permission to reuse it. The source repository includes no license granting general rights to reuse, redistribute, or create derivative works from the code.
 
 ---
 
@@ -904,6 +905,7 @@ The implementation can be demonstrated or reviewed on request by technical revie
 - [15 - Wazuh Dashboard Port Migration](15-Wazuh-Dashboard-Port-Migration.md)
 - [16 - FortiGate → Wazuh Integration](16-FortiGate-Wazuh-Integration.md)
 - [17 - SOC Monitoring Dashboard](17-SOC-Monitoring-Dashboard.md)
+- [SOC-SOAR-Console](https://github.com/amr294/SOC-SOAR-Console) (source code and standalone tests, separate repository)
 
 ---
 
